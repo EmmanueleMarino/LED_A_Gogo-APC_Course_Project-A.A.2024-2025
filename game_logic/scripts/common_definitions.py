@@ -6,7 +6,10 @@ game_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # Absolu
 assets_path = os.path.join(game_path,"assets")                          # Absolute path of the "assets" folder
 
 # [Base width and height for the game]
-base_game_width, base_game_height = 640, 360
+base_game_size = (640, 360)
+
+# [Fullscreen width and height]
+fullscreen_game_size = (1280, 720)
 
 # [GRID POSITIONING]
 x_offset = 8    # 8 pixels of offset (the "0,0" tile will be placed at (8,0) coordinates)
