@@ -11,19 +11,23 @@ base_game_size = (640, 360)
 # [Fullscreen width and height]
 fullscreen_game_size = (1280, 720)
 
-# [GRID POSITIONING]
-x_offset = 8    # 8 pixels of offset (the "0,0" tile will be placed at (8,0) coordinates)
+# [OFFSETS FOR THE POSITIONING OF SPRITES ON THE GRID]
+grid_x_offset = 8
+player_x_offset = 2
+player_y_offset = -30
 
-# Function which calculates the coordinates of a given 24x24 tile
-def get_tile_coords(tile_idxs):
+# Function which calculates the screen coordinates of a sprite relatively to a 26x15 grid of 24x24 tiles
+def get_tile_related_screen_coords(tile_idxs, x_offset, y_offset):
     '''
     [ARGUMENT]:
     "tile_idxs": 2-elements tuple which represents the indexes of a tile in a 26x15 grid
+    "x_offset" : Offset (in pixels) on the x-axis
+    "y_offset" : Offset (in pixels) on the y-axis
     
     [RETURN]:
     "tile_coordinates": 2-elements tuple which represents the "on-screen" coordinates of the tile
     '''
-    return (x_offset + tile_idxs[0]*24, tile_idxs[1]*24)
+    return (x_offset + tile_idxs[0]*24, y_offset + tile_idxs[1]*24)
 
 # "pogoTile" class: each object of this class represents a pogo tile
 class PogoTile:
