@@ -16,6 +16,9 @@ grid_x_offset = 8
 player_x_offset = 2
 player_y_offset = -30
 
+# [VARIOUS ANIMATION SLOWDOWN CONSTANTS]
+player_slowdown_constant = 8
+
 # Function which calculates the screen coordinates of a sprite relatively to a 26x15 grid of 24x24 tiles
 def get_tile_related_screen_coords(tile_idxs, x_offset, y_offset):
     '''

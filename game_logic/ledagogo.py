@@ -8,9 +8,11 @@ from scripts import screen_resize as scrsz
 pygame.init()
 
 screen = pygame.display.set_mode(cmndef.base_game_size)
-grey_tile = pygame.image.load(os.path.join(cmndef.assets_path, "pogo_tile.png"))
-blue_tile = pygame.image.load(os.path.join(cmndef.assets_path, "blue_tile.png"))
-green_tile = pygame.image.load(os.path.join(cmndef.assets_path, "green_tile.png"))
+grey_tile = pygame.image.load(os.path.join(cmndef.assets_path, "tiles/pogo_tiles/empty_tile.png"))
+blue_tile = pygame.image.load(os.path.join(cmndef.assets_path, "tiles/pogo_tiles/p2_tile.png"))
+green_tile = pygame.image.load(os.path.join(cmndef.assets_path, "tiles/pogo_tiles/p1_tile.png"))
+red_tile = pygame.image.load(os.path.join(cmndef.assets_path, "tiles/pogo_tiles/p3_tile.png"))
+yellow_tile = pygame.image.load(os.path.join(cmndef.assets_path, "tiles/pogo_tiles/p4_tile.png"))
 
 # The "game_surface" is the surface on which all of the game graphics will be
 # rendered on. It gets used in place of the "screen" Surface object, for it
@@ -33,6 +35,9 @@ animation_frames_sequence = [0,1,2,1]
 # the current game loop iteration.
 current_animation_idx = 0
 
+# The player's position on the screen 
+player_position = cmndef.get_tile_related_screen_coords((10,6),cmndef.player_x_offset,cmndef.player_y_offset)
+
 # "Clock" object to ensure the game loop gets played every 1/60th of a second
 # (The game gets capped at 60FPS)
 clock = pygame.time.Clock()
@@ -52,9 +57,15 @@ for i in range(8):
     row = []
     row.append(cmndef.PogoTile(grey_tile))
     for j in range(1,4):
-        row.append(cmndef.PogoTile(green_tile))
+        if(j % 2 == 0):
+            row.append(cmndef.PogoTile(green_tile))
+        else:
+            row.append(cmndef.PogoTile(red_tile))
     for j in range(5,8):
-        row.append(cmndef.PogoTile(blue_tile))
+        if(j % 2 == 0):
+            row.append(cmndef.PogoTile(blue_tile))
+        else:
+            row.append(cmndef.PogoTile(yellow_tile))
     row.append(cmndef.PogoTile(grey_tile))
 
     tile_matrix.append(row)
@@ -67,6 +78,12 @@ fullscreen = False
 
 # Scaled state
 scaled = False
+
+# Player animation slowdown index => the game loop gets repeated 60 times a second,
+# but the player's animation is made up of three frames only, so the same frame
+# has to be repeated multiple times in order for the animation to have the right speed
+player_anim_slowdown_idx = 0
+
 
 #  /---------\
 # | Game loop |
@@ -84,6 +101,7 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
+        # Detection of a single key pressing 
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_F11:
                 fullscreen, game_surface, screen = scrsz.toggle_fullscreen(fullscreen,scaled,game_surface,screen)
@@ -91,17 +109,31 @@ while running:
             elif event.key == pygame.K_F10:
                 scaled, game_surface, screen = scrsz.toggle_scaled_2x(fullscreen, scaled, game_surface, screen)
 
-    # Cut a piece of the playing surface underneath the player sprite
-    background_part = playing_surface.subsurface(pygame.Rect(cmndef.get_tile_related_screen_coords((9,4),8,0)[0], cmndef.get_tile_related_screen_coords((9,4),cmndef.grid_x_offset,0)[1], 32, 32))
+    # Detection of what keys are being
+    # continuosly pressed at the moment   
+    cont_pressed_keys = pygame.key.get_pressed()
+    if cont_pressed_keys[pygame.K_UP]:
+        player_position = (player_position[0], player_position[1] - 1)
+    if cont_pressed_keys[pygame.K_RIGHT]:
+        player_position = (player_position[0] + 1, player_position[1])
+    if cont_pressed_keys[pygame.K_DOWN]:
+        player_position = (player_position[0], player_position[1] + 1)
+    if cont_pressed_keys[pygame.K_LEFT]:
+        player_position = (player_position[0] - 1, player_position[1])
 
-    game_surface.blit(background_part, (0,0))
 
     # Blitting the player on the game surface (not on the playing surface, given that
     # the back of the player's sprite will be cut out off of said surface)
     game_surface.blit(p1_surface[animation_frames_sequence[current_animation_idx]],
-                      cmndef.get_tile_related_screen_coords((10,6),cmndef.player_x_offset,cmndef.player_y_offset))
+                      player_position)
     
-    current_animation_idx = (current_animation_idx + 1) % 4
+    # The player animation only gets changed every "player_slowdown_constant/60"th of a second
+    if(player_anim_slowdown_idx == cmndef.player_slowdown_constant):
+        player_anim_slowdown_idx = 0
+        current_animation_idx = (current_animation_idx + 1) % 4
+
+    # At each game loop iteration, the slowdown index gets increased
+    player_anim_slowdown_idx += 1
 
     screen.blit(game_surface, (0,0))
     pygame.display.flip()
