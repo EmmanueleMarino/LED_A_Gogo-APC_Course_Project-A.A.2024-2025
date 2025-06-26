@@ -1,6 +1,0 @@
- /---------------------------------------------\
-| Install these in a virtual environment (venv) |
- \---------------------------------------------/ 
-pygame-ce
-pyserial
-Nuitka

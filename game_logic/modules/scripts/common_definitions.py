@@ -2,7 +2,7 @@
 import os
 
 # [COMMON PATHS]
-game_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # Absolute path of the "game_logic" folder
+game_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # Absolute path of the "game_logic" folder
 assets_path = os.path.join(game_path,"assets")                          # Absolute path of the "assets" folder
 
 # [Base width and height for the game]
@@ -13,11 +13,6 @@ fullscreen_game_size = (1280, 720)
 
 # [OFFSETS FOR THE POSITIONING OF SPRITES ON THE GRID]
 grid_x_offset = 8
-player_x_offset = 2
-player_y_offset = -30
-
-# [VARIOUS ANIMATION SLOWDOWN CONSTANTS]
-player_slowdown_constant = 8
 
 # Function which calculates the screen coordinates of a sprite relatively to a 26x15 grid of 24x24 tiles
 def get_tile_related_screen_coords(tile_idxs, x_offset, y_offset):

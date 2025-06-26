@@ -1,6 +1,6 @@
 # [IMPORT OF LIBRARIES]
 import pygame
-from scripts import common_definitions as cmndef
+from modules.scripts import common_definitions as cmndef
 
 # Various functions to resize the screen after the press of a button
 
