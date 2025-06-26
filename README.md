@@ -1,10 +1,9 @@
-<div style="margin-left: 250px;
-            margin-bottom: 15px;">
+<div style="margin-bottom: 15px;">
 <img src="game_logic/assets/game_logo.png" alt="Logo for the <LED-A-Gogo> project" width="250" />
 </div>
 
-# 📟 LED-A-Gogo - APC Course Project - A.A. 2024/2025 📟
-**Academic Year:** 2025/2025  
+# 📟 LED-A-Gogo - APC Course Project - A.A. 2024/2025
+**Academic Year:** 2024/2025  
 **Course Instructor:** Professor Nicola Mazzocca  
 **University:** University of Naples Federico II (UNINA)  
 **Degree Program:** Master’s Degree in Computer Science  
