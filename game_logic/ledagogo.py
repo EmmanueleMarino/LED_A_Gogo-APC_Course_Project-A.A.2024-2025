@@ -14,6 +14,9 @@ green_tile = pygame.image.load(os.path.join(cmndef.assets_path, "tiles/pogo_tile
 red_tile = pygame.image.load(os.path.join(cmndef.assets_path, "tiles/pogo_tiles/p3_tile.png"))
 yellow_tile = pygame.image.load(os.path.join(cmndef.assets_path, "tiles/pogo_tiles/p4_tile.png"))
 
+board_border_side = pygame.image.load(os.path.join(cmndef.assets_path, "tiles/border_tiles/grey_side.png"))
+board_border_angle = pygame.image.load(os.path.join(cmndef.assets_path, "tiles/border_tiles/grey_angle.png"))
+
 # The "game_surface" is the surface on which all of the game graphics will be
 # rendered on. It gets used in place of the "screen" Surface object, for it
 # will be properly resized according to the window size at every game loop cycle.
@@ -24,8 +27,16 @@ game_surface = pygame.Surface(cmndef.base_game_size)
 # will be drawn).
 playing_surface = pygame.Surface(cmndef.base_game_size)
 
-# The player is instantiated
-player_1 = Player((10,6), 1)
+# Starting positions on the grid for each player
+players_starting_positions = [(10,5), (15,5), (10,10), (15,10)]
+
+# The players get instantiated
+players = []
+for i in range(4):
+    players.append(Player(players_starting_positions[i],i+1))
+
+# [FOR DEBUGGING PURPOSES] - Index of the currently controlled player
+current_player = 0
 
 # "Clock" object to ensure the game loop gets played every 1/60th of a second
 # (The game gets capped at 60FPS)
@@ -68,16 +79,45 @@ fullscreen = False
 # Scaled state
 scaled = False
 
+
 #  /---------\
 # | Game loop |
 #  \---------/
 while running:
 
-    # Rendering of the "pogo" tiles matrix
+    # Rendering of the "pogo" tiles matrix (CODE TO REFACTOR)
     for x_tile, y_tile in product(range(9,17), range(4,12)):
+        #  /------------------------------------\
+        # | RENDERING OF THE "POGO BOARD" BORDER |
+        #  \------------------------------------/
+        if x_tile == 9:
+            playing_surface.blit(board_border_side,cmndef.get_tile_related_screen_coords((x_tile-1,y_tile),cmndef.grid_x_offset+12,0))
+        if x_tile == 16:
+            playing_surface.blit(board_border_side,cmndef.get_tile_related_screen_coords((x_tile+1,y_tile),cmndef.grid_x_offset,0))
+        if y_tile == 4:
+            playing_surface.blit(pygame.transform.rotate(board_border_side, 90),cmndef.get_tile_related_screen_coords((x_tile,y_tile-1),cmndef.grid_x_offset,+12))
+        if y_tile == 11:
+            playing_surface.blit(pygame.transform.rotate(board_border_side, 90),cmndef.get_tile_related_screen_coords((x_tile,y_tile+1),cmndef.grid_x_offset,0))
+        if x_tile == 9 and y_tile == 4:
+            playing_surface.blit(board_border_angle,cmndef.get_tile_related_screen_coords((x_tile-1,y_tile-1),cmndef.grid_x_offset+12,12))
+        if x_tile == 16 and y_tile == 4:
+            playing_surface.blit(board_border_angle,cmndef.get_tile_related_screen_coords((x_tile+1,y_tile-1),cmndef.grid_x_offset,12))
+        if x_tile == 9 and y_tile == 11:
+            playing_surface.blit(board_border_angle,cmndef.get_tile_related_screen_coords((x_tile-1,y_tile+1),cmndef.grid_x_offset+12,0))
+        if x_tile == 16 and y_tile == 11:
+            playing_surface.blit(board_border_angle,cmndef.get_tile_related_screen_coords((x_tile+1,y_tile+1),cmndef.grid_x_offset,0))
+
+        #  /-----------------------------\
+        # | RENDERING OF THE BOARD ITSELF |
+        #  \-----------------------------/ 
         playing_surface.blit(tile_matrix[x_tile-9][y_tile-4].get_tiletype(),cmndef.get_tile_related_screen_coords((x_tile,y_tile), cmndef.grid_x_offset, 0))
 
     game_surface.blit(playing_surface,(0,0))
+
+    # The "colliders" for the current player
+    # are computed 
+    colliders = players + []
+    del colliders[current_player]
 
     # Event detection in the game loop
     for event in pygame.event.get():
@@ -93,34 +133,61 @@ while running:
                 scaled, game_surface, screen = scrsz.toggle_scaled_2x(fullscreen, scaled, game_surface, screen)
 
             elif event.key == pygame.K_UP:
-                player_1.change_direction(Direction.UP)
+                players[current_player].change_direction(Direction.UP)
             elif event.key == pygame.K_RIGHT:
-                player_1.change_direction(Direction.RIGHT)
+                players[current_player].change_direction(Direction.RIGHT)
             elif event.key == pygame.K_DOWN:
-                player_1.change_direction(Direction.DOWN)
+                players[current_player].change_direction(Direction.DOWN)
             elif event.key == pygame.K_LEFT:
-                player_1.change_direction(Direction.LEFT)
-                
+                players[current_player].change_direction(Direction.LEFT)
+
+            # [FOR DEBUGGING PURPOSES] - Change the currently controlled player
+            elif event.key == pygame.K_TAB:
+                current_player = (current_player + 1) % 4
+
+    # [LAST POSITION UPDATE]
+    last_position_update = (0,0)
+
     # Detection of what keys are being
     # continuosly pressed at the moment   
     cont_pressed_keys = pygame.key.get_pressed()
     if cont_pressed_keys[pygame.K_UP]:
-        player_1.screen_position = (player_1.screen_position[0], player_1.screen_position[1] - 1)
+        last_position_update = ((0,-1))
+        players[current_player].update_position((0,-1))
     elif cont_pressed_keys[pygame.K_RIGHT]:
-        player_1.screen_position = (player_1.screen_position[0] + 1, player_1.screen_position[1])
+        last_position_update = ((1,0))
+        players[current_player].update_position((1,0))
     elif cont_pressed_keys[pygame.K_DOWN]:
-        player_1.screen_position = (player_1.screen_position[0], player_1.screen_position[1] + 1)
+        last_position_update = ((0,1))
+        players[current_player].update_position((0,1))
     elif cont_pressed_keys[pygame.K_LEFT]:
-        player_1.screen_position = (player_1.screen_position[0] - 1, player_1.screen_position[1])
+        last_position_update = ((-1,0))
+        players[current_player].update_position((-1,0))
 
+    # If the movement has caused the current player to collide,
+    # the position update gets reverted before the actual blitting.
+    # By doing so, the player's hitbox won't get stuck into other
+    # player's (or entity's) hitboxes.
+    if(players[current_player].check_collisions(colliders)):
+        players[current_player].update_position((last_position_update[0] * -1,
+                                                 last_position_update[1] * -1))
 
-    # Blitting the player on the game surface (not on the playing surface, given that
-    # the back of the player's sprite will be cut out off of said surface)
-    game_surface.blit(player_1.surface,
-                      player_1.screen_position)
+    #  /-----------------------------------------------------------------------------\
+    # | Blitting the player(s) on the game surface (not on the playing surface, given | 
+    # | that the back of the player's sprite will be cut out off of said surface)     |
+    #  \-----------------------------------------------------------------------------/
+    # The order in which the players get blitted is ascending with the "Y" screen
+    # coordinate (if a player has got a bigger "Y" screen coordinate, said player is
+    # positioned closer to the camera)
+    sorted_players = sorted(players, key=lambda p: p.screen_position[1])
+    for i in range(4):
+        #pygame.draw.rect(game_surface, (255,0,0), sorted_players[i].hitbox) # -> [FOR DEBUGGING PURPOSES]
+        game_surface.blit(sorted_players[i].surface,
+                          sorted_players[i].screen_position)
     
-    # The player surface gets updated
-    player_1.compute_surface()
+    # The players surfaces get updated
+    for i in range(4):
+        players[i].compute_surface()
 
     screen.blit(game_surface, (0,0))
     pygame.display.flip()

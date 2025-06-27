@@ -19,8 +19,14 @@ class Player(Entity):
     # [OFFSETS ON THE X AND Y AXIS
     #  FOR THE POSITIONING OF THE
     #  SPRITE RELATIVELY TO THE GRID]
-    X_OFFSET = 2
-    Y_OFFSET = -30
+    GRID_X_OFFSET = 2
+    GRID_Y_OFFSET = -30
+
+    # [OFFSETS ON THE X AND Y AXIS
+    #  FOR THE POSITIONING OF THE HITBOX
+    #  RELATIVELY TO THE ENTITY SPRITE]
+    HITBOX_X_OFFSET = 6
+    HITBOX_Y_OFFSET = 30
 
     # [ANIMATION SLOWDOWN CONSTANT]
     ANIMATION_SLOWDOWN_CONSTANT = 8         # It expresses the number of game loops in
@@ -57,7 +63,7 @@ class Player(Entity):
         self.direction = Direction.DOWN     # The current direction of the player
 
         # The constructor of the upper class gets called
-        super().__init__(grid_position, surface=self.animation_matrix[Direction.UP.value][0])
+        super().__init__(grid_position, surface=self.animation_matrix[Direction.UP.value][0], hitbox_size=(24,24))
 
 
     # [Method to compute the matrix whose rows are vectors
@@ -116,3 +122,24 @@ class Player(Entity):
         # to set the direction via a method, rather than
         # accessing the object's attribute directly
         self.direction = direction
+
+    
+    # [Method to update the position of the player based on
+    #  what directional key is being pressed (the function
+    #  will be modified accordingly when the angular velocity
+    #  readings are used to move a player)]
+    def update_position(self, movement_tuple):
+        '''
+        [PARAMETERS]:
+        "self"           : reference to the current object
+        "movement_tuple" : 2-elements tuple which indicates the
+                           offset - in terms of pixels - that has
+                           to be summed to the current player's
+                           screen position
+        '''
+        self.screen_position = (self.screen_position[0] + movement_tuple[0],
+                                self.screen_position[1] + movement_tuple[1])
+
+        # The hitbox has to move together with the player's sprite
+        self.hitbox.x += movement_tuple[0]
+        self.hitbox.y += movement_tuple[1]
