@@ -30,7 +30,7 @@ game_surface = pygame.Surface(cmndef.base_game_size)
 playing_surface = pygame.Surface(cmndef.base_game_size)
 
 # Starting positions on the grid for each player
-players_starting_positions = [(10,5), (15,5), (10,10), (15,10)]
+players_starting_positions = [(10,6), (15,6), (10,11), (15,11)]
 
 #  /----------------------------------------------\
 # | SURFACES OF THE VARIOUS GAME SCENARIO ELEMENTS |
