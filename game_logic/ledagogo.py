@@ -91,6 +91,7 @@ while running:
     for tile_row in pogo_board.pogo_tiles:
         for tile in tile_row:
             playing_surface.blit(tile.surface, tile.screen_position)
+            #pygame.draw.rect(playing_surface, (255,0,0), tile.hitbox) # -> [FOR DEBUGGING PURPOSES]
 
     # [Rendering of the "pogo board" boarder]
     # Rendering of the side tiles
@@ -176,6 +177,14 @@ while running:
         players[current_player].update_position((last_position_update[0] * -1,
                                                  last_position_update[1] * -1))
 
+    #  /----------------------------------------------------------------\
+    # | CHECK IF THE "CHANGE TILE ACQUISITION" EVENT HAS TO BE TRIGGERED |
+    #  \----------------------------------------------------------------/
+    for tile_row in pogo_board.pogo_tiles:
+        for tile in tile_row:
+            if(players[current_player].check_collisions([tile])):
+                tile.change_acquisition(players[current_player].player_id)
+
     #  /-----------------------------------------------------------------------------\
     # | Blitting the player(s) on the game surface (not on the playing surface, given | 
     # | that the back of the player's sprite will be cut out off of said surface)     |
@@ -188,10 +197,6 @@ while running:
         #pygame.draw.rect(game_surface, (255,0,0), sorted_players[i].hitbox) # -> [FOR DEBUGGING PURPOSES]
         game_surface.blit(sorted_players[i].surface,
                           sorted_players[i].screen_position)
-    
-    # The players surfaces get updated
-    for i in range(4):
-        players[i].compute_surface()
 
     # Rendering the global shadows
     game_surface.blit(global_shadow,(0,0))
@@ -201,6 +206,14 @@ while running:
 
     screen.blit(game_surface, (0,0))
     pygame.display.flip()
+
+    # The players surfaces get updated
+    for i in range(4):
+        players[i].compute_surface()
+
+    # The surfaces for the
+    # board's tiles get updated
+    pogo_board.compute_surfaces()
 
     # Wait for 60 ticks
     clock.tick(60)

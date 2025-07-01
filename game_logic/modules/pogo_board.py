@@ -112,5 +112,6 @@ class PogoBoard():
 
     # [Method to compute the surfaces for all the tiles in the board]
     def compute_surfaces(self):
-        for tile in self.pogo_tiles:
-            tile.compute_surface()
+        for tile_row in self.pogo_tiles:
+            for tile in tile_row:
+                tile.compute_surface()
