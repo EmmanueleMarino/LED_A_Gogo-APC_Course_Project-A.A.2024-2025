@@ -18,14 +18,14 @@ class PogoTile(Entity):
     # [OFFSETS ON THE X AND Y AXIS
     #  FOR THE POSITIONING OF THE
     #  SPRITE RELATIVELY TO THE GRID]
-    GRID_X_OFFSET = 8
-    GRID_Y_OFFSET = 0
+    GRID_X_OFFSET = -12
+    GRID_Y_OFFSET = -20
 
     # [OFFSETS ON THE X AND Y AXIS
     #  FOR THE POSITIONING OF THE HITBOX
     #  RELATIVELY TO THE ENTITY SPRITE]
-    HITBOX_X_OFFSET = 11
-    HITBOX_Y_OFFSET = 11
+    HITBOX_X_OFFSET = 31
+    HITBOX_Y_OFFSET = 31
 
     # [Class constructor]
     def __init__(self, grid_position):
