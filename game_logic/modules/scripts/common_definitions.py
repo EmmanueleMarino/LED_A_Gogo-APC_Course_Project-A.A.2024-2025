@@ -26,10 +26,3 @@ def get_tile_related_screen_coords(tile_idxs, x_offset, y_offset):
     "tile_coordinates": 2-elements tuple which represents the "on-screen" coordinates of the tile
     '''
     return (x_offset + tile_idxs[0]*24, y_offset + tile_idxs[1]*24)
-
-# "pogoTile" class: each object of this class represents a pogo tile
-class PogoTile:
-    def __init__(self, tiletype):
-        self.tiletype = tiletype
-    def get_tiletype(self):
-        return self.tiletype

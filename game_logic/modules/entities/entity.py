@@ -62,7 +62,8 @@ class Entity(ABC):
         '''
         pass    # No implementation
 
-     # [Method to verify if the ]
+     # [Method to verify if the entity collides with another entity
+     #  each entity - in this context - constitutes a "collider"]
     def check_collisions(self, colliders_list):
         '''
         [PARAMETERS]:

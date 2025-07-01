@@ -5,8 +5,7 @@ from itertools import product
 from modules.scripts import common_definitions as cmndef
 from modules.scripts import screen_resize as scrsz
 from modules.entities.player import Player
-from modules.entities.board_border import BoardBorder
-from modules.enumerations.border_type import BorderType
+from modules.pogo_board import PogoBoard
 from modules.enumerations.direction import Direction
 
 screen = pygame.display.set_mode(cmndef.base_game_size)
@@ -61,73 +60,10 @@ pygame.display.set_caption("LED-A-Gogo (APC Project - A.A. 2024/2025)")
 icon_surface = pygame.image.load(os.path.join(cmndef.assets_path, "logo_redux.png")).convert_alpha()
 pygame.display.set_icon(icon_surface)
 
-# Pogo tiles matrix (maybe I'll create a more structured data structure, this matrix
-# of tiles is only for tests)
-tile_matrix = []
-
-# Instantiation of the matrix of "pogo" tiles (it's an 8x8 square grid, but
-# we'll probably decide on a different size)... it depends on future implementation decisions
-for i in range(8):
-    row = []
-    row.append(cmndef.PogoTile(grey_tile))
-    for j in range(1,4):
-        if(j % 2 == 0):
-            row.append(cmndef.PogoTile(green_tile))
-        else:
-            row.append(cmndef.PogoTile(red_tile))
-    for j in range(5,8):
-        if(j % 2 == 0):
-            row.append(cmndef.PogoTile(blue_tile))
-        else:
-            row.append(cmndef.PogoTile(yellow_tile))
-    row.append(cmndef.PogoTile(grey_tile))
-
-    tile_matrix.append(row)
-
-
-# Building a dictionary of "BoardBorder" objects
-board_borders = {}
-
-# The "angles" field will be a list of BoardBorder
-# objects of the "ANGLE_BLOCK" type
-angle_blocks = []
-angle_blocks.append(BoardBorder((8,4), BorderType.ANGLE_BLOCK, (Direction.UP,Direction.LEFT)))
-angle_blocks.append(BoardBorder((17,4), BorderType.ANGLE_BLOCK, (Direction.UP,Direction.RIGHT)))
-angle_blocks.append(BoardBorder((17,13), BorderType.ANGLE_BLOCK, (Direction.DOWN,Direction.RIGHT)))
-angle_blocks.append(BoardBorder((8,13), BorderType.ANGLE_BLOCK, (Direction.DOWN,Direction.LEFT)))
-
-# The "sides" field will be a matrix of BoardBorder
-# objects of the "SIDE_TILE" type, where each row
-# will represent a different orientation of the
-# tile objects it contains
-side_tiles = []
-
-# [ROW 0] = "UP" -> Upper border
-upper_border = []
-for i in range(8):
-    upper_border.append(BoardBorder((9+i,4), BorderType.SIDE_TILE, Direction.UP))
-side_tiles.append(upper_border)
-
-# [ROW 1] = "RIGHT" -> Right border
-right_border = []
-for i in range(8):
-    right_border.append(BoardBorder((17,5+i), BorderType.SIDE_TILE, Direction.RIGHT))
-side_tiles.append(right_border)
-
-# [ROW 2] = "DOWN" -> Lower border
-lower_border = []
-for i in range(8):
-    lower_border.append(BoardBorder((9+i,13), BorderType.SIDE_TILE, Direction.DOWN))
-side_tiles.append(lower_border)
-
-# [ROW 3] = "LEFT" -> Left border
-left_border = []
-for i in range(8):
-    left_border.append(BoardBorder((8,5+i), BorderType.SIDE_TILE, Direction.LEFT))
-side_tiles.append(left_border)
-
-board_borders['angle_blocks'] = angle_blocks
-board_borders['side_tiles'] = side_tiles
+# An "8x8" pogo board gets instantiated
+# starting from the "(9,5)" tile on the
+# 26x15 grid
+pogo_board = PogoBoard((8,8), (9,5))
 
 # Game loop running state
 running = True
@@ -152,21 +88,21 @@ while running:
     playing_surface.blit(underneath_the_board,(0,0))
 
     # Rendering of the "pogo" tiles matrix
-    for x_tile, y_tile in product(range(9,17), range(5,13)):
-        playing_surface.blit(tile_matrix[x_tile-9][y_tile-5].get_tiletype(),cmndef.get_tile_related_screen_coords((x_tile,y_tile), cmndef.grid_x_offset, 0))
+    for tile_row in pogo_board.pogo_tiles:
+        for tile in tile_row:
+            playing_surface.blit(tile.surface, tile.screen_position)
 
-    # [Rendering of the "pogo" board border]
+    # [Rendering of the "pogo board" boarder]
     # Rendering of the side tiles
-    for tile_row in board_borders['side_tiles']:
+    for tile_row in pogo_board.board_borders['side_tiles']:
         for side_tile in tile_row:
             playing_surface.blit(side_tile.surface, side_tile.screen_position)
             #pygame.draw.rect(playing_surface, (255,0,0), side_tile.hitbox) # -> [FOR DEBUGGING PURPOSES]
 
     # Rendering of the angle blocks
-    for angle_block in board_borders["angle_blocks"]:
+    for angle_block in pogo_board.board_borders['angle_blocks']:
         playing_surface.blit(angle_block.surface, angle_block.screen_position)
-        #pygame.draw.rect(playing_surface, (255,0,0), angle_block.hitbox) # -> [FOR DEBUGGING PURPOSES]
-
+        
     # Rendering of the board shadows
     playing_surface.blit(board_shadows,(0,0))
 
@@ -178,10 +114,13 @@ while running:
     game_surface.blit(playing_surface,(0,0))
 
     # The "colliders" for the current player
-    # are computed (on two separate lines, simply
+    # are computed (on separate lines, simply
     # for the sake of readiblity)
-    colliders = players + board_borders['side_tiles'][Direction.UP.value] + board_borders['side_tiles'][Direction.RIGHT.value]
-    colliders = colliders + board_borders['side_tiles'][Direction.DOWN.value] + board_borders['side_tiles'][Direction.LEFT.value]
+    colliders = players + []
+    colliders += pogo_board.board_borders['side_tiles'][Direction.UP.value]
+    colliders += pogo_board.board_borders['side_tiles'][Direction.RIGHT.value]
+    colliders += pogo_board.board_borders['side_tiles'][Direction.DOWN.value]
+    colliders += pogo_board.board_borders['side_tiles'][Direction.LEFT.value]
     del colliders[current_player]
 
     # Event detection in the game loop
