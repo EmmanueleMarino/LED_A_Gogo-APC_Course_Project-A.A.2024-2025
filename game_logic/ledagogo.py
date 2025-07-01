@@ -1,12 +1,12 @@
 import pygame
 import os
-from itertools import product
 
 from modules.scripts import common_definitions as cmndef
 from modules.scripts import screen_resize as scrsz
 from modules.entities.player import Player
 from modules.pogo_board import PogoBoard
 from modules.enumerations.direction import Direction
+from modules.scripts.find_smallest_rectangle import find_smallest_rectangle
 
 screen = pygame.display.set_mode(cmndef.base_game_size)
 grey_tile = pygame.image.load(os.path.join(cmndef.assets_path, "tiles/pogo_tiles/empty_tile.png"))
@@ -180,10 +180,35 @@ while running:
     #  /----------------------------------------------------------------\
     # | CHECK IF THE "CHANGE TILE ACQUISITION" EVENT HAS TO BE TRIGGERED |
     #  \----------------------------------------------------------------/
-    for tile_row in pogo_board.pogo_tiles:
-        for tile in tile_row:
-            if(players[current_player].check_collisions([tile])):
-                tile.change_acquisition(players[current_player].player_id)
+    for i in range(len(pogo_board.pogo_tiles)):
+        for j in range(len(pogo_board.pogo_tiles[0])):
+            # [If the player collides with the tile's hitbox]
+            if(players[current_player].check_collisions([pogo_board.pogo_tiles[i][j]])):
+                # Change the "player_id" for the tile
+                pogo_board.pogo_tiles[i][j].change_acquisition(players[current_player].player_id)
+
+                # Update the status of the board: the "i,j" element of the "player_id - 1" matrix
+                # of the status will be set to "1", the same element of the two remaining matrices
+                # will be set to "0"
+                for z in range(1, len(players)+1):
+                    if z == players[current_player].player_id:
+                        pogo_board.status[z-1][i][j] = 1
+                    else:
+                        pogo_board.status[z-1][i][j] = 0
+                
+                # Check if a rectangle has been closed
+                closed_rectangle = find_smallest_rectangle(pogo_board.status[players[current_player].player_id - 1])
+
+                # If the player has closed a rectangle
+                if(closed_rectangle[0] != (-1,-1)):
+                    # [PRINT FOR DEBUGGING PURPOSES]
+                    print(f"Player {players[current_player].player_id} closed a {closed_rectangle[1]}x{closed_rectangle[2]} rectangle at the following path: {closed_rectangle[3]}")
+
+                    # [THE TILES CORRESPONDING TO THE CLOSED RECTANGLE GET "RESET"-TED]
+                    for tile_coordinates in closed_rectangle[3]:
+                        pogo_board.pogo_tiles[tile_coordinates[0]][tile_coordinates[1]].change_acquisition(0)
+                        pogo_board.status[players[current_player].player_id - 1][tile_coordinates[0]][tile_coordinates[1]] = 0
+                    
 
     #  /-----------------------------------------------------------------------------\
     # | Blitting the player(s) on the game surface (not on the playing surface, given | 

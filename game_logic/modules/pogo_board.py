@@ -43,10 +43,15 @@ class PogoBoard():
         self.pogo_tiles = self.instantiate_pogo_tiles()
         self.board_borders = self.instantiate_board_borders()
 
-        '''
-        Evaluate whether having a separate "status_matrix" - such a matrix is a "board_dimensions[0] X board_dimensions[1]"
-        matrix whose every element indicates the "tile acquisition" of each tile by a certain player among the four.
-        '''
+        # Instantiating the board's status: said "status" is
+        # a data structure which consists of a list of four
+        # matrices (each matrix corresponds with one of the
+        # four players) whose dimensions are the same as the
+        # PogoBoard, and whose elements are "0" when the
+        # corresponding player hasn't acquired the corresponding
+        # tile on the board, and "1" when the corresponding player
+        # has acquired the corresponding tile on the board
+        self.status = self.instantiate_status_mats()
 
 
     # [Private method to instantiate the matrix of pogo tiles]
@@ -115,3 +120,20 @@ class PogoBoard():
         for tile_row in self.pogo_tiles:
             for tile in tile_row:
                 tile.compute_surface()
+
+
+    # [Method to instantiate the three status matrices]
+    def instantiate_status_mats(self):
+        status_mats = []
+
+        for _ in range(4):
+            matrix = []
+            for _ in range(self.board_dimensions[0]):
+                row = []
+                for _ in range(self.board_dimensions[1]):
+                    row.append(0)
+                matrix.append(row)
+        
+            status_mats.append(matrix)
+
+        return(status_mats)
