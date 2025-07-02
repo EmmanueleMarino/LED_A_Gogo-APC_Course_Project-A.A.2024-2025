@@ -37,6 +37,10 @@ class Player(Entity):
     ANIMATION_FRAMES_SEQUENCE = [0,1,2,1]   # Succession of indexes which model the order in
                                             # which the animation frames will be played
 
+    # [SCORE-THRESHOLDS]
+    SCORE_THESHOLDS = [50, 150, 300, 500,       # When the player's score exceeds a threshold,
+                       750, 1100, 1500, 1950]   # the corresponding LED gets turned on.
+
     #  /-------\
     # | METHODS |
     #  \-------/
@@ -63,9 +67,21 @@ class Player(Entity):
         self.animation_matrix = self.compute_animation_matrix(player_id)
         self.direction = Direction.DOWN     # The current direction of the player
 
+        # Number of "Active LEDs" - this is the number of LEDs which have
+        # been turned on by increasing the score during the game session. 
+        self.active_leds_num = 0            # Initially, no LEDs are turned on
+
         # Instantiation of the scorer (the reference to the current "Player"
         # object gets passed as a parameter of the "PlayerScorer" constructor)
         self.scorer = PlayerScorer(self)
+
+        #  /---------------------------------------------------------------\
+        # | [N.B.] - A number - and NOT a mask - is used to indicate the    |
+        # | active LEDs because the LEDs' turning on is "cumulative", which |
+        # | means that if a LED in the sequence of LEDs has been turned on, |
+        # | all of the previous LEDs in the sequence will have also been    |
+        # | previously turned on.                                           |
+        #  \---------------------------------------------------------------/ 
 
         # The constructor of the upper class gets called
         super().__init__(grid_position, surface=self.animation_matrix[Direction.UP.value][0], hitbox_size=(22,22))
@@ -148,3 +164,25 @@ class Player(Entity):
         # The hitbox has to move together with the player's sprite
         self.hitbox.x += movement_tuple[0]
         self.hitbox.y += movement_tuple[1]
+
+
+    # [Method to update the score and the active LEDs number]
+    def update_score_and_leds(self, points_to_sum):
+        '''
+        [PARAMETERS]
+        "points_to_sum" : amount of points to sum to the score.
+        '''
+        self.score += points_to_sum
+
+        # If the next threshold is exceeded, the next LED gets turned on
+        if(self.score >= Player.SCORE_THESHOLDS[self.active_leds_num]):
+            self.active_leds_num += 1
+            # [FOR DEBUGGING PURPOSES]
+            print(f"Player {self.player_id} has exceeded threshold n°{self.active_leds_num}")
+        
+        # The maximum score is "1950", so if the score exceeds this threshold,
+        # the score gets capped at 1950, and the "active_leds_num" gets capped
+        # to "8".
+        if(self.score >= 1950):
+            self.score = 1950
+            self.active_leds_num = 8

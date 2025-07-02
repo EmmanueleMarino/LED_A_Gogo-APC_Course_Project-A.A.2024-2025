@@ -197,7 +197,7 @@ while running:
                     #print(f"Player {players[current_player].player_id} closed a {closed_rectangle[1]}x{closed_rectangle[2]} rectangle at the following path: {closed_rectangle[3]}")
 
                     # The player's score gets updated with the rectangle's area
-                    players[current_player].score += closed_rectangle[1]*closed_rectangle[2]
+                    players[current_player].update_score_and_leds(closed_rectangle[1]*closed_rectangle[2])
 
                     # [PRINT FOR DEBUGGING PURPOSES]
                     #print(f"Player {players[current_player].player_id}'s current score is {players[current_player].score}")
