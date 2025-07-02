@@ -57,6 +57,10 @@ class PlayerScorer():
                                                                             # "module" operation will be used to
                                                                             # select the current colour for indeces
                                                                             # greater than 3 (i % 4)
+    
+    # Surfaces of labels representing the players'IDs and the "next LED to turn on"
+    PLAYER_LABELS = [pygame.image.load(os.path.join(assets_path, f"hud/player_labels/p{i+1}_label.png")) for i in range(4)]
+    LED_LABELS = [pygame.image.load(os.path.join(assets_path, f"hud/led_labels/led_{i+1}_label.png")) for i in range(8)]    
 
     # [CLASS CONSTRUCTOR]
     def __init__(self, player_ref):
@@ -87,8 +91,6 @@ class PlayerScorer():
         # threshold and the next
         score_rect = copy.deepcopy(PlayerScorer.SCORE_RECT)
     
-
-
         # "score_interval" is the difference between the current
         # threshold to exceed and the last threshold that was exceeded
         score_interval = 0
@@ -135,6 +137,12 @@ class PlayerScorer():
 
         # The HUD gets blitted on top of the scorer_surface
         scorer_surface.blit(PlayerScorer.HUD_GRAPHICS)
+
+        # The player's label gets blitted on top of the scorer_surface
+        scorer_surface.blit(PlayerScorer.PLAYER_LABELS[self.player_ref.player_id - 1], (53,5))
+
+        # The "target LED" label gets blitted on top of the scorer_surface
+        scorer_surface.blit(PlayerScorer.LED_LABELS[self.player_ref.active_leds_num - 1], (70,32))
 
         # Score string
         score_string = str(self.player_ref.score)
