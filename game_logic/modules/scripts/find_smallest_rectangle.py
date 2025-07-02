@@ -24,19 +24,23 @@ If the rectangle hasn't been found, the top-left element which gets returned is 
 '''
 
 
-def find_smallest_rectangle(matrix):
+def find_smallest_rectangle(matrix, minimum_size):
+    '''
+    "minimum_size" : 2-elements tuple which represents the minimum size
+                     of the peripheral rectangles to detect.
+    '''
     # [The count of rows and columns
     # of the matrix gets retrieved]
     rows_cnt = len(matrix)
     cols_cnt = len(matrix[0]) if rows_cnt > 0 else 0
 
-    #  /------------------------------------------------------------\
-    # | We iterate on all of the possible (height, width)            |
-    # | couples, where "height" values span from "2" to              |
-    # | "rows_cnt", while "width" values span from "2" to "cols_cnt" |
-    #  \------------------------------------------------------------/
-    for height in range(2, rows_cnt + 1):
-        for width in range(2, cols_cnt + 1):
+    #  /-------------------------------------------------------------\
+    # | We iterate on all of the possible (height, width)             |
+    # | couples, where "height" values span from "minimum_size[0]" to |
+    # | "rows_cnt", while "width" values span from "2" to "cols_cnt"  |
+    #  \-------------------------------------------------------------/
+    for height in range(minimum_size[0], rows_cnt + 1):
+        for width in range(minimum_size[1], cols_cnt + 1):
             #  /------------------------------------------------------------------\
             # | The dimensions of the submatrix which is getting tested            |
             # | - in the current iteration - in order to find the smallest         |

@@ -9,14 +9,6 @@ from modules.enumerations.direction import Direction
 from modules.scripts.find_smallest_rectangle import find_smallest_rectangle
 
 screen = pygame.display.set_mode(cmndef.base_game_size)
-grey_tile = pygame.image.load(os.path.join(cmndef.assets_path, "tiles/pogo_tiles/empty_tile.png"))
-blue_tile = pygame.image.load(os.path.join(cmndef.assets_path, "tiles/pogo_tiles/p2_tile.png"))
-green_tile = pygame.image.load(os.path.join(cmndef.assets_path, "tiles/pogo_tiles/p1_tile.png"))
-red_tile = pygame.image.load(os.path.join(cmndef.assets_path, "tiles/pogo_tiles/p3_tile.png"))
-yellow_tile = pygame.image.load(os.path.join(cmndef.assets_path, "tiles/pogo_tiles/p4_tile.png"))
-
-board_border_side = pygame.image.load(os.path.join(cmndef.assets_path, "tiles/border_tiles/grey_side.png"))
-board_border_angle = pygame.image.load(os.path.join(cmndef.assets_path, "tiles/border_tiles/grey_angle.png"))
 
 # The "game_surface" is the surface on which all of the game graphics will be
 # rendered on. It gets used in place of the "screen" Surface object, for it
@@ -197,12 +189,18 @@ while running:
                         pogo_board.status[z-1][i][j] = 0
                 
                 # Check if a rectangle has been closed
-                closed_rectangle = find_smallest_rectangle(pogo_board.status[players[current_player].player_id - 1])
+                closed_rectangle = find_smallest_rectangle(pogo_board.status[players[current_player].player_id - 1],(3,3))
 
                 # If the player has closed a rectangle
                 if(closed_rectangle[0] != (-1,-1)):
                     # [PRINT FOR DEBUGGING PURPOSES]
-                    print(f"Player {players[current_player].player_id} closed a {closed_rectangle[1]}x{closed_rectangle[2]} rectangle at the following path: {closed_rectangle[3]}")
+                    #print(f"Player {players[current_player].player_id} closed a {closed_rectangle[1]}x{closed_rectangle[2]} rectangle at the following path: {closed_rectangle[3]}")
+
+                    # The player's score gets updated with the rectangle's area
+                    players[current_player].score += closed_rectangle[1]*closed_rectangle[2]
+
+                    # [PRINT FOR DEBUGGING PURPOSES]
+                    #print(f"Player {players[current_player].player_id}'s current score is {players[current_player].score}")
 
                     # [THE TILES CORRESPONDING TO THE CLOSED RECTANGLE GET "RESET"-TED]
                     for tile_coordinates in closed_rectangle[3]:
@@ -228,6 +226,10 @@ while running:
 
     # Rendering the global lights and ambience
     game_surface.blit(lights_and_ambience,(0,0))
+    
+    # [THE HUD GETS BLITTED ON TOP OF EVERYTHING]
+    for i in range(4):
+        game_surface.blit(players[i].scorer.surface, players[i].scorer.screen_position)
 
     screen.blit(game_surface, (0,0))
     pygame.display.flip()
@@ -235,6 +237,7 @@ while running:
     # The players surfaces get updated
     for i in range(4):
         players[i].compute_surface()
+        players[i].scorer.compute_surface()
 
     # The surfaces for the
     # board's tiles get updated

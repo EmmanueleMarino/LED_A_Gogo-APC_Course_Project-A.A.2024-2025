@@ -10,6 +10,7 @@ from modules.scripts import common_definitions as cmndef
 import pygame
 import os
 from modules.enumerations.direction import Direction    # Enumeration for the four directions
+from modules.player_scorer import PlayerScorer
 
 
 class Player(Entity):
@@ -61,6 +62,10 @@ class Player(Entity):
 
         self.animation_matrix = self.compute_animation_matrix(player_id)
         self.direction = Direction.DOWN     # The current direction of the player
+
+        # Instantiation of the scorer (the reference to the current "Player"
+        # object gets passed as a parameter of the "PlayerScorer" constructor)
+        self.scorer = PlayerScorer(self)
 
         # The constructor of the upper class gets called
         super().__init__(grid_position, surface=self.animation_matrix[Direction.UP.value][0], hitbox_size=(22,22))
