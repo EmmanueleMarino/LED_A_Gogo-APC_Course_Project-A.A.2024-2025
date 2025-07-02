@@ -38,7 +38,7 @@ class Player(Entity):
                                             # which the animation frames will be played
 
     # [SCORE-THRESHOLDS]
-    SCORE_THESHOLDS = [50, 150, 300, 500,       # When the player's score exceeds a threshold,
+    SCORE_THRESHOLDS = [50, 150, 300, 500,       # When the player's score exceeds a threshold,
                        750, 1100, 1500, 1950]   # the corresponding LED gets turned on.
 
     #  /-------\
@@ -174,15 +174,16 @@ class Player(Entity):
         '''
         self.score += points_to_sum
 
-        # If the next threshold is exceeded, the next LED gets turned on
-        if(self.score >= Player.SCORE_THESHOLDS[self.active_leds_num]):
-            self.active_leds_num += 1
-            # [FOR DEBUGGING PURPOSES]
-            print(f"Player {self.player_id} has exceeded threshold n°{self.active_leds_num}")
-        
         # The maximum score is "1950", so if the score exceeds this threshold,
         # the score gets capped at 1950, and the "active_leds_num" gets capped
         # to "8".
         if(self.score >= 1950):
             self.score = 1950
             self.active_leds_num = 8
+            return
+
+        # If the next threshold is exceeded, the next LED gets turned on
+        if(self.score >= Player.SCORE_THRESHOLDS[self.active_leds_num]):
+            self.active_leds_num += 1
+            # [FOR DEBUGGING PURPOSES]
+            #print(f"Player {self.player_id} has exceeded threshold n°{self.active_leds_num}")
