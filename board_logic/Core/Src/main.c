@@ -18,6 +18,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include <string.h>
+#include <stdio.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -44,10 +46,15 @@ I2C_HandleTypeDef hi2c1;
 
 SPI_HandleTypeDef hspi1;
 
+UART_HandleTypeDef huart5;
+
 PCD_HandleTypeDef hpcd_USB_FS;
 
 /* USER CODE BEGIN PV */
 angular_velocity gyroscope_measurements = {0,0,0};
+uint8_t rx_byte;               // un byte ricevuto
+char command_buffer[10];       // Buffer per il comando
+uint8_t buffer_index = 0;      // Indice del buffer
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -56,6 +63,7 @@ static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USB_PCD_Init(void);
+static void MX_UART5_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -97,8 +105,9 @@ int main(void)
   MX_I2C1_Init();
   MX_SPI1_Init();
   MX_USB_PCD_Init();
+  MX_UART5_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_UART_Receive_IT(&huart5, &rx_byte, 1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -151,7 +160,9 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB|RCC_PERIPHCLK_I2C1;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB|RCC_PERIPHCLK_UART5
+                              |RCC_PERIPHCLK_I2C1;
+  PeriphClkInit.Uart5ClockSelection = RCC_UART5CLKSOURCE_PCLK1;
   PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
   PeriphClkInit.USBClockSelection = RCC_USBCLKSOURCE_PLL;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
@@ -249,6 +260,41 @@ static void MX_SPI1_Init(void)
 }
 
 /**
+  * @brief UART5 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_UART5_Init(void)
+{
+
+  /* USER CODE BEGIN UART5_Init 0 */
+
+  /* USER CODE END UART5_Init 0 */
+
+  /* USER CODE BEGIN UART5_Init 1 */
+
+  /* USER CODE END UART5_Init 1 */
+  huart5.Instance = UART5;
+  huart5.Init.BaudRate = 9600;
+  huart5.Init.WordLength = UART_WORDLENGTH_8B;
+  huart5.Init.StopBits = UART_STOPBITS_1;
+  huart5.Init.Parity = UART_PARITY_NONE;
+  huart5.Init.Mode = UART_MODE_TX_RX;
+  huart5.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart5.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart5.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart5.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart5) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN UART5_Init 2 */
+
+  /* USER CODE END UART5_Init 2 */
+
+}
+
+/**
   * @brief USB Initialization Function
   * @param None
   * @retval None
@@ -296,6 +342,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
@@ -334,6 +381,84 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == UART5)
+    {
+        //char msg[] = "For debugging purposes: interrupt received\r\n";
+       // HAL_UART_Transmit(&huart5, (uint8_t*)msg, strlen(msg), 100);
+
+       // char buf[50];
+        //sprintf(buf, "For debugging purposes: byte received: '%c' (0x%02X)\r\n", rx_byte, rx_byte);
+        //HAL_UART_Transmit(&huart5, (uint8_t*)buf, strlen(buf), 100);
+
+        static uint8_t i = 0;
+        static char rx_buffer[10];
+
+        if (rx_byte != '\n' && rx_byte != '\r' && i < sizeof(rx_buffer) - 1)
+        {
+            rx_buffer[i++] = rx_byte;
+        }
+        else
+        {
+            rx_buffer[i] = '\0';
+            i = 0;
+
+            uint8_t valid_command = 1;
+
+            if (rx_buffer[1] != '\0')
+            {
+                valid_command = 0;
+            }
+            else
+            {
+                switch (rx_buffer[0])
+                {
+                    case '0':
+                        turn_off_led();
+                        {
+                            char complete_msg[] = "Game complete!!\r\n";
+                            HAL_UART_Transmit(&huart5, (uint8_t*)complete_msg, strlen(complete_msg), 100);
+                        }
+                        break;
+
+                    case '1': HAL_GPIO_WritePin(GPIOE, LD3_Pin, GPIO_PIN_SET); break;
+                    case '2': HAL_GPIO_WritePin(GPIOE, LD4_Pin, GPIO_PIN_SET); break;
+                    case '3': HAL_GPIO_WritePin(GPIOE, LD5_Pin, GPIO_PIN_SET); break;
+                    case '4': HAL_GPIO_WritePin(GPIOE, LD6_Pin, GPIO_PIN_SET); break;
+                    case '5': HAL_GPIO_WritePin(GPIOE, LD7_Pin, GPIO_PIN_SET); break;
+                    case '6': HAL_GPIO_WritePin(GPIOE, LD8_Pin, GPIO_PIN_SET); break;
+                    case '7': HAL_GPIO_WritePin(GPIOE, LD9_Pin, GPIO_PIN_SET); break;
+                    case '8': HAL_GPIO_WritePin(GPIOE, LD10_Pin, GPIO_PIN_SET); break;
+
+                    default:
+                        valid_command = 0;
+                        break;
+                }
+            }
+
+            if (!valid_command)
+            {
+                char error[] = "Warning: invalid command!!\r\n";
+                HAL_UART_Transmit(&huart5, (uint8_t*)error, strlen(error), 100);
+            }
+            //else if (rx_buffer[0] != '0')
+            //{
+              //  char ok[] = "For debugging purposes: command executed successfully\r\n";
+                //HAL_UART_Transmit(&huart5, (uint8_t*)ok, strlen(ok), 100);
+            //}
+        }
+
+        HAL_UART_Receive_IT(&huart5, &rx_byte, 1);
+    }
+}
+
+
+void turn_off_led(void)
+{
+  HAL_GPIO_WritePin(GPIOE, LD3_Pin|LD4_Pin|LD5_Pin|LD6_Pin|
+                            LD7_Pin|LD8_Pin|LD9_Pin|LD10_Pin, GPIO_PIN_RESET);
+}
 
 /* USER CODE END 4 */
 
