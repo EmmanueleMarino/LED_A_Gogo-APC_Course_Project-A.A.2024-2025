@@ -7,6 +7,8 @@ from modules.entities.player import Player
 from modules.pogo_board import PogoBoard
 from modules.enumerations.direction import Direction
 from modules.scripts.find_smallest_rectangle import find_smallest_rectangle
+from modules.scripts.serial_communication import serial_communication as sercom
+
 
 screen = pygame.display.set_mode(cmndef.base_game_size)
 
@@ -38,7 +40,13 @@ lights_and_ambience = pygame.image.load(os.path.join(cmndef.assets_path, "game_s
 # The players get instantiated
 players = []
 for i in range(4):
-    players.append(Player(players_starting_positions[i],i+1))
+    if i == 0:
+        # Currently, only "PLAYER 1" is associated with an STM32F3DISCOVERY board
+        players.append(Player(players_starting_positions[i],i+1,sercom.connect_bt_module('COM7', 9600, 2)))
+    else:
+        # The reference to the "virtual serial port"
+        # will be "None" for all the other players.
+        players.append(Player(players_starting_positions[i],i+1, None))
 
 # [FOR DEBUGGING PURPOSES] - Index of the currently controlled player
 current_player = 0
@@ -245,5 +253,9 @@ while running:
 
     # Wait for 60 ticks
     clock.tick(60)
+
+# [The connection(s) with the BT modules get closed]
+sercom.close_connection(players[0].controller_serial_port)  # For now, only P1 is associated
+                                                            # with an STM32DISCOVERYBOARD
 
 pygame.quit()

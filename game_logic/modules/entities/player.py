@@ -9,8 +9,9 @@ from modules.entities.entity import Entity
 from modules.scripts import common_definitions as cmndef
 import pygame
 import os
-from modules.enumerations.direction import Direction    # Enumeration for the four directions
+from modules.enumerations.direction import Direction                                # Enumeration for the four directions
 from modules.player_scorer import PlayerScorer
+from modules.scripts.serial_communication import serial_communication as sercom     # For serial communication
 
 
 class Player(Entity):
@@ -45,7 +46,7 @@ class Player(Entity):
     # | METHODS |
     #  \-------/
     # [Class constructor]
-    def __init__(self, grid_position, player_id):
+    def __init__(self, grid_position, player_id, controller_serial_port):
         '''
         [PARAMETERS]:
         "self"      : reference to the current object.
@@ -82,6 +83,10 @@ class Player(Entity):
         # | all of the previous LEDs in the sequence will have also been    |
         # | previously turned on.                                           |
         #  \---------------------------------------------------------------/ 
+
+        # Object of the "Serial" class which gets instantiated when
+        # the Python program opens a COM port towards a BT module
+        self.controller_serial_port = controller_serial_port
 
         # The constructor of the upper class gets called
         super().__init__(grid_position, surface=self.animation_matrix[Direction.UP.value][0], hitbox_size=(22,22))
@@ -185,5 +190,10 @@ class Player(Entity):
         # If the next threshold is exceeded, the next LED gets turned on
         if(self.score >= Player.SCORE_THRESHOLDS[self.active_leds_num]):
             self.active_leds_num += 1
+
+            # The corresponding LED gets turned on
+            if self.controller_serial_port != None:
+                sercom.turn_led_on(self.active_leds_num, self.controller_serial_port)
+
             # [FOR DEBUGGING PURPOSES]
             #print(f"Player {self.player_id} has exceeded threshold n°{self.active_leds_num}")

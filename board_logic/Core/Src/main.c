@@ -52,9 +52,9 @@ PCD_HandleTypeDef hpcd_USB_FS;
 
 /* USER CODE BEGIN PV */
 angular_velocity gyroscope_measurements = {0,0,0};
-uint8_t rx_byte;               // un byte ricevuto
-char command_buffer[10];       // Buffer per il comando
-uint8_t buffer_index = 0;      // Indice del buffer
+uint8_t rx_byte;               // A byte which gets received on the USART5 RX Terminal
+char command_buffer[10];       // Buffer of commands which are given to the board
+uint8_t buffer_index = 0;      // Index of the buffer
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -385,12 +385,15 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == UART5)
     {
-        //char msg[] = "For debugging purposes: interrupt received\r\n";
-       // HAL_UART_Transmit(&huart5, (uint8_t*)msg, strlen(msg), 100);
+    	/*
+    	[FOR DEBUGGING PURPOSES]
+        char msg[] = "For debugging purposes: interrupt received\r\n";
+        HAL_UART_Transmit(&huart5, (uint8_t*)msg, strlen(msg), 100);
 
-       // char buf[50];
-        //sprintf(buf, "For debugging purposes: byte received: '%c' (0x%02X)\r\n", rx_byte, rx_byte);
-        //HAL_UART_Transmit(&huart5, (uint8_t*)buf, strlen(buf), 100);
+        char buf[50];
+        sprintf(buf, "For debugging purposes: byte received: '%c' (0x%02X)\r\n", rx_byte, rx_byte);
+        HAL_UART_Transmit(&huart5, (uint8_t*)buf, strlen(buf), 100);
+		*/
 
         static uint8_t i = 0;
         static char rx_buffer[10];
@@ -416,20 +419,21 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
                 {
                     case '0':
                         turn_off_led();
+                        /*	[FOR DEBUGGING PURPOSES]
                         {
                             char complete_msg[] = "Game complete!!\r\n";
                             HAL_UART_Transmit(&huart5, (uint8_t*)complete_msg, strlen(complete_msg), 100);
-                        }
+                        }*/
                         break;
 
-                    case '1': HAL_GPIO_WritePin(GPIOE, LD3_Pin, GPIO_PIN_SET); break;
-                    case '2': HAL_GPIO_WritePin(GPIOE, LD4_Pin, GPIO_PIN_SET); break;
-                    case '3': HAL_GPIO_WritePin(GPIOE, LD5_Pin, GPIO_PIN_SET); break;
-                    case '4': HAL_GPIO_WritePin(GPIOE, LD6_Pin, GPIO_PIN_SET); break;
-                    case '5': HAL_GPIO_WritePin(GPIOE, LD7_Pin, GPIO_PIN_SET); break;
-                    case '6': HAL_GPIO_WritePin(GPIOE, LD8_Pin, GPIO_PIN_SET); break;
-                    case '7': HAL_GPIO_WritePin(GPIOE, LD9_Pin, GPIO_PIN_SET); break;
-                    case '8': HAL_GPIO_WritePin(GPIOE, LD10_Pin, GPIO_PIN_SET); break;
+                    case '1': HAL_GPIO_WritePin(GPIOE, LD7_Pin, GPIO_PIN_SET); break;
+                    case '2': HAL_GPIO_WritePin(GPIOE, LD9_Pin, GPIO_PIN_SET); break;
+                    case '3': HAL_GPIO_WritePin(GPIOE, LD10_Pin, GPIO_PIN_SET); break;
+                    case '4': HAL_GPIO_WritePin(GPIOE, LD8_Pin, GPIO_PIN_SET); break;
+                    case '5': HAL_GPIO_WritePin(GPIOE, LD6_Pin, GPIO_PIN_SET); break;
+                    case '6': HAL_GPIO_WritePin(GPIOE, LD4_Pin, GPIO_PIN_SET); break;
+                    case '7': HAL_GPIO_WritePin(GPIOE, LD3_Pin, GPIO_PIN_SET); break;
+                    case '8': HAL_GPIO_WritePin(GPIOE, LD5_Pin, GPIO_PIN_SET); break;
 
                     default:
                         valid_command = 0;
@@ -437,16 +441,18 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
                 }
             }
 
-            if (!valid_command)
-            {
+            /*
+            if (!valid_command) {
                 char error[] = "Warning: invalid command!!\r\n";
                 HAL_UART_Transmit(&huart5, (uint8_t*)error, strlen(error), 100);
             }
-            //else if (rx_buffer[0] != '0')
-            //{
-              //  char ok[] = "For debugging purposes: command executed successfully\r\n";
-                //HAL_UART_Transmit(&huart5, (uint8_t*)ok, strlen(ok), 100);
-            //}
+
+
+            else if (rx_buffer[0] != '0') {
+				char ok[] = "For debugging purposes: command executed successfully\r\n";
+				HAL_UART_Transmit(&huart5, (uint8_t*)ok, strlen(ok), 100);
+            }
+            */
         }
 
         HAL_UART_Receive_IT(&huart5, &rx_byte, 1);
