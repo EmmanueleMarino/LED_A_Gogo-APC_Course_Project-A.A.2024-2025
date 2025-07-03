@@ -142,7 +142,7 @@ class PlayerScorer():
         scorer_surface.blit(PlayerScorer.PLAYER_LABELS[self.player_ref.player_id - 1], (53,5))
 
         # The "target LED" label gets blitted on top of the scorer_surface
-        scorer_surface.blit(PlayerScorer.LED_LABELS[self.player_ref.active_leds_num - 1], (70,32))
+        scorer_surface.blit(PlayerScorer.LED_LABELS[self.player_ref.active_leds_num], (70,32))
 
         # Score string
         score_string = str(self.player_ref.score)
