@@ -74,6 +74,18 @@ fullscreen = False
 # Scaled state
 scaled = False
 
+# Game termination state
+game_termination = False
+
+#  /-----------------------------------------\
+# | SURFACES FOR THE HUD ELEMENTS WHICH GET   |
+# | SHOWN WHEN THE GAME SESSION IS TERMINATED |
+#  \-----------------------------------------/
+# These are all placeholder graphics, they'll have to be
+# remade to be coherent with the game's art style.
+game_over_surface = pygame.image.load(os.path.join(cmndef.assets_path, "hud/game_over/game_over_placeholder.png")).convert_alpha()
+winning_player_surface = [pygame.image.load(os.path.join(cmndef.assets_path, f"hud/game_over/p{i+1}_won_placeholder.png")).convert_alpha() for i in range(4)]
+
 #  /---------\
 # | Game loop |
 #  \---------/
@@ -137,13 +149,13 @@ while running:
             elif event.key == pygame.K_F10:
                 scaled, game_surface, screen = scrsz.toggle_scaled_2x(fullscreen, scaled, game_surface, screen)
 
-            elif event.key == pygame.K_UP:
+            elif event.key == pygame.K_UP and not game_termination:
                 players[current_player].change_direction(Direction.UP)
-            elif event.key == pygame.K_RIGHT:
+            elif event.key == pygame.K_RIGHT and not game_termination:
                 players[current_player].change_direction(Direction.RIGHT)
-            elif event.key == pygame.K_DOWN:
+            elif event.key == pygame.K_DOWN and not game_termination:
                 players[current_player].change_direction(Direction.DOWN)
-            elif event.key == pygame.K_LEFT:
+            elif event.key == pygame.K_LEFT and not game_termination:
                 players[current_player].change_direction(Direction.LEFT)
 
             # [FOR DEBUGGING PURPOSES] - Change the currently controlled player
@@ -156,18 +168,19 @@ while running:
     # Detection of what keys are being
     # continuosly pressed at the moment   
     cont_pressed_keys = pygame.key.get_pressed()
-    if cont_pressed_keys[pygame.K_UP]:
-        last_position_update = ((0,-1))
-        players[current_player].update_position((0,-1))
-    elif cont_pressed_keys[pygame.K_RIGHT]:
-        last_position_update = ((1,0))
-        players[current_player].update_position((1,0))
-    elif cont_pressed_keys[pygame.K_DOWN]:
-        last_position_update = ((0,1))
-        players[current_player].update_position((0,1))
-    elif cont_pressed_keys[pygame.K_LEFT]:
-        last_position_update = ((-1,0))
-        players[current_player].update_position((-1,0))
+    if(not game_termination):
+        if cont_pressed_keys[pygame.K_UP]:
+            last_position_update = ((0,-1))
+            players[current_player].update_position((0,-1))
+        elif cont_pressed_keys[pygame.K_RIGHT]:
+            last_position_update = ((1,0))
+            players[current_player].update_position((1,0))
+        elif cont_pressed_keys[pygame.K_DOWN]:
+            last_position_update = ((0,1))
+            players[current_player].update_position((0,1))
+        elif cont_pressed_keys[pygame.K_LEFT]:
+            last_position_update = ((-1,0))
+            players[current_player].update_position((-1,0))
 
     # If the movement has caused the current player to collide,
     # the position update gets reverted before the actual blitting.
@@ -239,6 +252,12 @@ while running:
     for i in range(4):
         game_surface.blit(players[i].scorer.surface, players[i].scorer.screen_position)
 
+    if(game_termination):
+        game_surface.blit(game_over_surface)
+        # The "winning surface" associated with the player
+        # with the highest score gets blitted on the game_surface.
+        game_surface.blit(winning_player_surface[sorted(players, key=lambda p: p.score)[-1].player_id - 1])
+
     screen.blit(game_surface, (0,0))
     pygame.display.flip()
 
@@ -251,10 +270,16 @@ while running:
     # board's tiles get updated
     pogo_board.compute_surfaces()
 
+    # The game gets terminated as soon as a
+    # player reaches the highest score
+    if any(players[i].score == cmndef.MAX_SCORE for i in range(4)):
+        game_termination = True
+
     # Wait for 60 ticks
     clock.tick(60)
 
 # [The connection(s) with the BT modules get closed]
+sercom.turn_led_on(0,players[0].controller_serial_port)
 sercom.close_connection(players[0].controller_serial_port)  # For now, only P1 is associated
                                                             # with an STM32DISCOVERYBOARD
 

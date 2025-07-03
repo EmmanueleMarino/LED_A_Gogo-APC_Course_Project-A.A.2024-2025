@@ -14,6 +14,9 @@ fullscreen_game_size = (1280, 720)
 # [OFFSETS FOR THE POSITIONING OF SPRITES ON THE GRID]
 grid_x_offset = 8
 
+# [MAXIMUM SCORE]
+MAX_SCORE = 1950
+
 # Function which calculates the screen coordinates of a sprite relatively to a 26x15 grid of 24x24 tiles
 def get_tile_related_screen_coords(tile_idxs, x_offset, y_offset):
     '''
