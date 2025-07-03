@@ -17,6 +17,9 @@ grid_x_offset = 8
 # [MAXIMUM SCORE]
 MAX_SCORE = 1950
 
+# [MAXIMUM DURATION OF A GAME SESSION (in seconds)]
+MAX_TIME = 120
+
 # Function which calculates the screen coordinates of a sprite relatively to a 26x15 grid of 24x24 tiles
 def get_tile_related_screen_coords(tile_idxs, x_offset, y_offset):
     '''

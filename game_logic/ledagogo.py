@@ -86,6 +86,9 @@ game_termination = False
 game_over_surface = pygame.image.load(os.path.join(cmndef.assets_path, "hud/game_over/game_over_placeholder.png")).convert_alpha()
 winning_player_surface = [pygame.image.load(os.path.join(cmndef.assets_path, f"hud/game_over/p{i+1}_won_placeholder.png")).convert_alpha() for i in range(4)]
 
+# This will get used to update the timer
+start_time = pygame.time.get_ticks()
+
 #  /---------\
 # | Game loop |
 #  \---------/
@@ -274,6 +277,23 @@ while running:
     # player reaches the highest score
     if any(players[i].score == cmndef.MAX_SCORE for i in range(4)):
         game_termination = True
+
+    #  /--------------------------------------------------\
+    # | Calculating the time (in seconds) that has elapsed |
+    # | between the first game loop and the current one    |
+    #  \--------------------------------------------------/
+    elapsed_time_sec = (pygame.time.get_ticks() - start_time) // 1000
+
+    if not game_termination:
+        # This gets used to calculate the time left
+        # for the game session to get terminated.
+        time_left = cmndef.MAX_TIME - elapsed_time_sec
+        
+        if(time_left == 0):
+            game_termination = True
+
+    # [FOR DEBUGGING PURPOSES]
+    print(time_left)
 
     # Wait for 60 ticks
     clock.tick(60)
