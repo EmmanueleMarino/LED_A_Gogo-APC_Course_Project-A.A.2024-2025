@@ -89,6 +89,9 @@ winning_player_surface = [pygame.image.load(os.path.join(cmndef.assets_path, f"h
 # This will get used to update the timer
 start_time = pygame.time.get_ticks()
 
+# The timer surface is - initially - transparent
+timer_surface =  pygame.Surface((120, 40), pygame.SRCALPHA)
+
 #  /---------\
 # | Game loop |
 #  \---------/
@@ -255,6 +258,8 @@ while running:
     for i in range(4):
         game_surface.blit(players[i].scorer.surface, players[i].scorer.screen_position)
 
+    game_surface.blit(timer_surface, (260,25))
+
     if(game_termination):
         game_surface.blit(game_over_surface)
         # The "winning surface" associated with the player
@@ -292,8 +297,13 @@ while running:
         if(time_left == 0):
             game_termination = True
 
+    '''
     # [FOR DEBUGGING PURPOSES]
-    print(time_left)
+    from math import floor
+    print(floor(time_left/60))
+    '''
+
+    timer_surface = cmndef.update_timer_surface(time_left)
 
     # Wait for 60 ticks
     clock.tick(60)
