@@ -25,7 +25,7 @@ import copy     # Every "score_rect" starts as a "deepcopy" of
                 # the static "SCORE_RECT" member of the class
 
 # LEDs offsets (relatively to the HUD graphics)
-LED_OFFSETS = [(147,10), (156,14), (160,23), (156,32), (147,36), (138,32), (134,24), (138,14)]
+LED_OFFSETS = [(163,28), (172,32), (176,41), (172,50), (163,54), (154,50), (150,42), (154,32)]
 
 #  /-----------------------------------------------------------------------------------------------------\
 # | [N.B.]: I tried to declare "LED_OFFSETS" as a static member of the class, but it wasn't recognized as |
@@ -36,20 +36,33 @@ LED_OFFSETS = [(147,10), (156,14), (160,23), (156,32), (147,36), (138,32), (134,
 class PlayerScorer():
     # Static member of the class: each of these surfaces is a digit
     DIGITS_SURFACES = [pygame.image.load(os.path.join(assets_path, f"hud/digits/{i}.png")) for i in range(10)]
-    SCREEN_POSITIONS = [(5,35),(455,35),(5,245),(455,245)]    # Screen position of the scorer associated with each
+    SCREEN_POSITIONS = [(-5,4),(425,4),(-5,245),(425,245)]    # Screen position of the scorer associated with each
                                                                 # player. The HUD does not follow the grid-based logic
                                                                 # which is followed by the "Entity" subclasses
 
-    # [PLACEHOLDER] => In the final project, it will be a list of surfaces, each surface corresponding
-    # to the HUD graphics relative to the player associated with the current PlayerScorer object
-    HUD_GRAPHICS = pygame.image.load(os.path.join(assets_path, "hud/hud_placeholder.png"))
+    # The base graphics for the Scorer
+    HUD_GRAPHICS = pygame.image.load(os.path.join(assets_path, "hud/hud_base.png"))
+
+    # The drop shadow of the Scorer
+    DROP_SHADOW = pygame.image.load(os.path.join(assets_path, "hud/hud_drop_shadow.png"))
+    DROP_SHADOW.set_alpha(75)
+
+    #  /----------------------------------------------------\
+    # | LIST OF 2-ELEMENTS TUPLE, BOTH OF WHICH ARE SURFACES |
+    #  \----------------------------------------------------/
+    # 1) The first element is the surface representing the "Player HUD Sprite" => it is an higher
+    #    resolution sprite of the player which is displayed on the left of the HUD
+    #
+    # 2) The second element is the surface representing the "label" relative to the player
+    PLAYER_HUD_SURFACES = [(pygame.image.load(os.path.join(assets_path, f"hud/player_hud_sprites/p{i+1}_hud_sprite.png")),
+                            pygame.image.load(os.path.join(assets_path, f"hud/player_labels/p{i+1}_label.png"))) for i in range(4)]
 
     # 6x6 rects which will be displayed when the corresponding led is turned on on the board
     LED_RECTS = [pygame.Rect(LED_OFFSETS[i][0], LED_OFFSETS[i][1], 8, 8) for i in range(8)]
 
     # (74x5) rect which shows the score progression relatively to the current score
     # threshold to exceed (in order to turn on the next LED on the "LED wheel")
-    SCORE_RECT = pygame.Rect(50, 40, 74, 5)
+    SCORE_RECT = pygame.Rect(61, 62, 74, 5)
 
     # Colours of the rects defined above
     LED_COLOURS = [(81,210,57), (73,211,239), (213,56,37), (240, 134, 58)]  # These four colours repeat, so there's no
@@ -58,8 +71,7 @@ class PlayerScorer():
                                                                             # select the current colour for indeces
                                                                             # greater than 3 (i % 4)
     
-    # Surfaces of labels representing the players'IDs and the "next LED to turn on"
-    PLAYER_LABELS = [pygame.image.load(os.path.join(assets_path, f"hud/player_labels/p{i+1}_label.png")) for i in range(4)]
+    # Surfaces of labels representing the "next LED to turn on"
     LED_LABELS = [pygame.image.load(os.path.join(assets_path, f"hud/led_labels/led_{i+1}_label.png")) for i in range(8)]    
 
     # [CLASS CONSTRUCTOR]
@@ -78,12 +90,14 @@ class PlayerScorer():
     # [Method to compute the entity surface at each game loop]
     def compute_surface(self):
         #  /-----------------------------------------------------------------\
-        # | The scorer's surface is composed by multiple overlapped surfaces. | 
-        # | For now, we'll simply blit the "DIGIT_SURFACES" on top of the     |
-        # | placeholder surface                                               |
+        # | The scorer's surface is composed by multiple overlapped surfaces. |                           |
         #  \-----------------------------------------------------------------/
         # A transparent "base surface" gets created
-        scorer_surface =  pygame.Surface((180, 80), pygame.SRCALPHA)
+        scorer_surface = pygame.Surface((221, 118), pygame.SRCALPHA)
+
+        # The first surface which gets blitted on the "scorer_surface"
+        # is that relative to the drop shadow.
+        scorer_surface.blit(PlayerScorer.DROP_SHADOW)
 
         # The "score rect" gets drawn on the "base surface",
         # and its X-dimension gets made proportional to
@@ -120,6 +134,10 @@ class PlayerScorer():
             print(self.player_ref.score - previous_threshold)
         '''
 
+        # The original "SCORE_RECT" gets drawn on the "scorer_surface"
+        # as a grey rectangle (the part "beneath" the "progress bar")
+        pygame.draw.rect(scorer_surface, (99,115,122), PlayerScorer.SCORE_RECT)
+
         # The "score_rect" gets drawn on the "scorer_surface"
         #  /-------------------------------------------------------------------------------------------------------\
         # | THIS SOLUTION IS A BIT OF A WORKAROUND - by executing only the "if" branch, when the score reached its  |
@@ -135,15 +153,23 @@ class PlayerScorer():
         for i in range(self.player_ref.active_leds_num):
             pygame.draw.rect(scorer_surface, PlayerScorer.LED_COLOURS[i % 4], PlayerScorer.LED_RECTS[i])
 
+        # The LEDs which haven't been turned on are visualized as a "grey" surface
+        for i in range(self.player_ref.active_leds_num,8):
+            pygame.draw.rect(scorer_surface, (99,115,122), PlayerScorer.LED_RECTS[i])
+
         # The HUD gets blitted on top of the scorer_surface
-        scorer_surface.blit(PlayerScorer.HUD_GRAPHICS)
+        scorer_surface.blit(PlayerScorer.HUD_GRAPHICS, (46,11))
+
+        # The player's "HUD sprite" gets blitted
+        # on top of the scorer surface 
+        scorer_surface.blit(PlayerScorer.PLAYER_HUD_SURFACES[self.player_ref.player_id - 1][0], (11,15))
 
         # The player's label gets blitted on top of the scorer_surface
-        scorer_surface.blit(PlayerScorer.PLAYER_LABELS[self.player_ref.player_id - 1], (53,5))
+        scorer_surface.blit(PlayerScorer.PLAYER_HUD_SURFACES[self.player_ref.player_id - 1][1], (77,19))
 
         # The "target LED" label gets blitted on top of the scorer_surface
         if self.player_ref.active_leds_num < 8:
-            scorer_surface.blit(PlayerScorer.LED_LABELS[self.player_ref.active_leds_num], (70,32))
+            scorer_surface.blit(PlayerScorer.LED_LABELS[self.player_ref.active_leds_num], (76,52))
         else:
             # If the player has reached the highest score, the
             # "next LED" label which gets displayed is the "LED 8" one.
@@ -156,6 +182,6 @@ class PlayerScorer():
         score_string = "0"*(6 - len(score_string)) + score_string
 
         for i in range(6):
-            scorer_surface.blit(PlayerScorer.DIGITS_SURFACES[int(score_string[i])],(107 + 11*i,56))
+            scorer_surface.blit(PlayerScorer.DIGITS_SURFACES[int(score_string[i])],(117 + 11*i,78))
 
         self.surface = scorer_surface
