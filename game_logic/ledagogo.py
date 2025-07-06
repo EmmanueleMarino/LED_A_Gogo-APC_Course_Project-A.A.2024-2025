@@ -36,6 +36,11 @@ board_upper_light = pygame.image.load(os.path.join(cmndef.assets_path, "game_sce
 shadows_under_the_board = pygame.image.load(os.path.join(cmndef.assets_path, "game_scenario/shadows_under_the_board.png")).convert_alpha()
 lights_and_ambience = pygame.image.load(os.path.join(cmndef.assets_path, "game_scenario/lights_and_ambience.png")).convert_alpha()
 
+# Apparently, when the "game_surface" gets
+# resized, the reference to the resized
+# surface has to be assigned to yet
+# another surface
+fullscreen_surface = None
 
 # The players get instantiated
 players = []
@@ -150,10 +155,24 @@ while running:
         # Detection of a single key pressing 
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_F11:
-                fullscreen, game_surface, screen = scrsz.toggle_fullscreen(fullscreen,scaled,game_surface,screen)
+                if(fullscreen):
+                    if(scaled):
+                        screen = pygame.display.set_mode(cmndef.base_game_size,pygame.SCALED)
+                    else:
+                        screen = pygame.display.set_mode(cmndef.base_game_size)
+                else:
+                    screen = pygame.display.set_mode(cmndef.fullscreen_game_size,pygame.FULLSCREEN)
+                fullscreen = not fullscreen
+                #fullscreen, game_surface, screen = scrsz.toggle_fullscreen(fullscreen,scaled,game_surface,screen)
 
             elif event.key == pygame.K_F10:
-                scaled, game_surface, screen = scrsz.toggle_scaled_2x(fullscreen, scaled, game_surface, screen)
+                if(not fullscreen):
+                    if(scaled):
+                        screen = pygame.display.set_mode(cmndef.base_game_size) 
+                    else:
+                        screen = pygame.display.set_mode(cmndef.base_game_size,pygame.SCALED)
+                    scaled = not scaled
+                #scaled, game_surface, screen = scrsz.toggle_scaled_2x(fullscreen, scaled, game_surface, screen)
 
             elif event.key == pygame.K_UP and not game_termination:
                 players[current_player].change_direction(Direction.UP)
@@ -266,7 +285,12 @@ while running:
         # with the highest score gets blitted on the game_surface.
         game_surface.blit(winning_player_surface[sorted(players, key=lambda p: p.score)[-1].player_id - 1])
 
-    screen.blit(game_surface, (0,0))
+    if(fullscreen):
+        fullscreen_surface = pygame.transform.scale(game_surface, cmndef.fullscreen_game_size)
+        screen.blit(fullscreen_surface, (0,0))
+    else:
+        screen.blit(game_surface,(0,0))
+
     pygame.display.flip()
 
     # The players surfaces get updated

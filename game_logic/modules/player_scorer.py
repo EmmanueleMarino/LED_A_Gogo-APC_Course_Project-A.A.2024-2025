@@ -70,6 +70,12 @@ class PlayerScorer():
                                                                             # "module" operation will be used to
                                                                             # select the current colour for indeces
                                                                             # greater than 3 (i % 4)
+
+    # Glows for each LED
+    LED_GLOWS = [pygame.image.load(os.path.join(assets_path, f"hud/led_glows/green_glow.png")),    # The same logic explained for the
+                 pygame.image.load(os.path.join(assets_path, f"hud/led_glows/blue_glow.png")),     # colours apply for these surfaces:
+                 pygame.image.load(os.path.join(assets_path, f"hud/led_glows/red_glow.png")),      # each of them represents the "glow"
+                 pygame.image.load(os.path.join(assets_path, f"hud/led_glows/orange_glow.png"))]   # a LED emits once it is turned on
     
     # Surfaces of labels representing the "next LED to turn on"
     LED_LABELS = [pygame.image.load(os.path.join(assets_path, f"hud/led_labels/led_{i+1}_label.png")) for i in range(8)]    
@@ -90,7 +96,7 @@ class PlayerScorer():
     # [Method to compute the entity surface at each game loop]
     def compute_surface(self):
         #  /-----------------------------------------------------------------\
-        # | The scorer's surface is composed by multiple overlapped surfaces. |                           |
+        # | The scorer's surface is composed by multiple overlapped surfaces. |
         #  \-----------------------------------------------------------------/
         # A transparent "base surface" gets created
         scorer_surface = pygame.Surface((221, 118), pygame.SRCALPHA)
@@ -184,4 +190,13 @@ class PlayerScorer():
         for i in range(6):
             scorer_surface.blit(PlayerScorer.DIGITS_SURFACES[int(score_string[i])],(117 + 11*i,78))
 
+        # The LEDs' glows get blitted on top of the final scorer's surface
+        for i in range(self.player_ref.active_leds_num):
+            scorer_surface.blit(PlayerScorer.LED_GLOWS[i % 4],
+                                (PlayerScorer.LED_RECTS[i].x - 5,     # By blitting the LED glow with a (-5,-5)
+                                 PlayerScorer.LED_RECTS[i].y - 5))    # offset, relatively to the LED's Rect,
+                                                                      # said glow is centered on the specific LED's Rect
+        
+        # The final composite surface gets
+        # returned to the caller
         self.surface = scorer_surface
