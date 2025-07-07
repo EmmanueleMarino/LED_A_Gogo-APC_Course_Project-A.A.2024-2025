@@ -73,7 +73,7 @@ class PlayerScorer():
 
     # Glows for each LED
     LED_GLOWS = [pygame.image.load(os.path.join(assets_path, f"hud/led_glows/green_glow.png")),    # The same logic explained for the
-                 pygame.image.load(os.path.join(assets_path, f"hud/led_glows/blue_glow.png")),     # colours apply for these surfaces:
+                 pygame.image.load(os.path.join(assets_path, f"hud/led_glows/blue_glow.png")),     # colours applies for these surfaces:
                  pygame.image.load(os.path.join(assets_path, f"hud/led_glows/red_glow.png")),      # each of them represents the "glow"
                  pygame.image.load(os.path.join(assets_path, f"hud/led_glows/orange_glow.png"))]   # a LED emits once it is turned on
     

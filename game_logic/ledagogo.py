@@ -86,10 +86,10 @@ game_termination = False
 # | SURFACES FOR THE HUD ELEMENTS WHICH GET   |
 # | SHOWN WHEN THE GAME SESSION IS TERMINATED |
 #  \-----------------------------------------/
-# These are all placeholder graphics, they'll have to be
-# remade to be coherent with the game's art style.
-game_over_surface = pygame.image.load(os.path.join(cmndef.assets_path, "hud/game_over/game_over_placeholder.png")).convert_alpha()
-winning_player_surface = [pygame.image.load(os.path.join(cmndef.assets_path, f"hud/game_over/p{i+1}_won_placeholder.png")).convert_alpha() for i in range(4)]
+game_over_surface = pygame.image.load(os.path.join(cmndef.assets_path, "hud/game_over/game_over.png")).convert_alpha()
+game_over_shadow = pygame.image.load(os.path.join(cmndef.assets_path, "hud/game_over/shadows/game_over.png")).convert_alpha()
+winning_player_surface = [pygame.image.load(os.path.join(cmndef.assets_path, f"hud/game_over/p{i+1}_won.png")).convert_alpha() for i in range(4)]
+winning_player_shadows = [pygame.image.load(os.path.join(cmndef.assets_path, f"hud/game_over/shadows/p{i+1}_won.png")).convert_alpha() for i in range(4)]
 
 # This will get used to update the timer
 start_time = pygame.time.get_ticks()
@@ -280,9 +280,12 @@ while running:
     game_surface.blit(timer_surface, (260,25))
 
     if(game_termination):
+        game_surface.blit(game_over_shadow)
         game_surface.blit(game_over_surface)
+
         # The "winning surface" associated with the player
         # with the highest score gets blitted on the game_surface.
+        game_surface.blit(winning_player_shadows[sorted(players, key=lambda p: p.score)[-1].player_id - 1])
         game_surface.blit(winning_player_surface[sorted(players, key=lambda p: p.score)[-1].player_id - 1])
 
     if(fullscreen):
