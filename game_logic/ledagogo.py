@@ -277,7 +277,7 @@ while running:
     for i in range(4):
         game_surface.blit(players[i].scorer.surface, players[i].scorer.screen_position)
 
-    game_surface.blit(timer_surface, (260,25))
+    game_surface.blit(timer_surface, (222,-5))
 
     if(game_termination):
         game_surface.blit(game_over_shadow)
