@@ -4,10 +4,12 @@ import os
 from modules.scripts import common_definitions as cmndef
 from modules.scripts import screen_resize as scrsz
 from modules.entities.player import Player
+from modules.entities.power_up import PowerUp
 from modules.pogo_board import PogoBoard
 from modules.enumerations.direction import Direction
 from modules.scripts.find_smallest_rectangle import find_smallest_rectangle
 from modules.scripts.serial_communication import serial_communication as sercom
+import random
 
 
 screen = pygame.display.set_mode(cmndef.base_game_size)
@@ -91,11 +93,30 @@ game_over_shadow = pygame.image.load(os.path.join(cmndef.assets_path, "hud/game_
 winning_player_surface = [pygame.image.load(os.path.join(cmndef.assets_path, f"hud/game_over/p{i+1}_won.png")).convert_alpha() for i in range(4)]
 winning_player_shadows = [pygame.image.load(os.path.join(cmndef.assets_path, f"hud/game_over/shadows/p{i+1}_won.png")).convert_alpha() for i in range(4)]
 
+
+#  /----------------------------------------------------------------\
+# | SURFACE FOR THE "TIME LEFT" HUD ELEMENT WITH THE RELATIVE SHADOW |
+#  \----------------------------------------------------------------/
+time_left_surface = pygame.image.load(os.path.join(cmndef.assets_path, "hud/time_left.png")).convert_alpha()
+time_left_shadow = pygame.image.load(os.path.join(cmndef.assets_path, "hud/time_left_shadow.png")).convert_alpha()
+
+
 # This will get used to update the timer
 start_time = pygame.time.get_ticks()
 
 # The timer surface is - initially - transparent
 timer_surface =  pygame.Surface((120, 40), pygame.SRCALPHA)
+
+# List of "PowerUp" objects
+# which are currently present
+# on the map
+power_ups = []
+
+# Second in which the most
+# recent power up was appended
+# to the list
+most_recent_power_up_sec = 0
+
 
 #  /---------\
 # | Game loop |
@@ -252,7 +273,15 @@ while running:
                     for tile_coordinates in closed_rectangle[3]:
                         pogo_board.pogo_tiles[tile_coordinates[0]][tile_coordinates[1]].change_acquisition(0)
                         pogo_board.status[players[current_player].player_id - 1][tile_coordinates[0]][tile_coordinates[1]] = 0
-                    
+
+
+    #  /--------------------------------------------\
+    # | BLITTING EVERY ACTIVE POWER UP ON THE SCREEN |
+    #  \--------------------------------------------/
+    for power_up in power_ups:
+        game_surface.blit(power_up.surface, power_up.screen_position)
+        # All of the power ups get blitted underneath the players
+
 
     #  /-----------------------------------------------------------------------------\
     # | Blitting the player(s) on the game surface (not on the playing surface, given | 
@@ -260,7 +289,7 @@ while running:
     #  \-----------------------------------------------------------------------------/
     # The order in which the players get blitted is ascending with the "Y" screen
     # coordinate (if a player has got a bigger "Y" screen coordinate, said player is
-    # positioned closer to the camera)
+    # positioned closer to the camera).
     sorted_players = sorted(players, key=lambda p: p.screen_position[1])
     for i in range(4):
         #pygame.draw.rect(game_surface, (255,0,0), sorted_players[i].hitbox) # -> [FOR DEBUGGING PURPOSES]
@@ -277,7 +306,9 @@ while running:
     for i in range(4):
         game_surface.blit(players[i].scorer.surface, players[i].scorer.screen_position)
 
-    game_surface.blit(timer_surface, (222,-5))
+    game_surface.blit(time_left_shadow,(230,-10))
+    game_surface.blit(time_left_surface,(230,-10))
+    game_surface.blit(timer_surface, (222,20))
 
     if(game_termination):
         game_surface.blit(game_over_shadow)
@@ -320,17 +351,29 @@ while running:
         # This gets used to calculate the time left
         # for the game session to get terminated.
         time_left = cmndef.MAX_TIME - elapsed_time_sec
-        
+
+        # If a multiple of 15 seconds has passed, a power 
+        # up gets added in a random place on the board. 
+        # [N.B]:
+        #   The final "and" in the condition guarantees that a new power up does not get added at each game
+        #   loop which has the same "divide-able by 15" elapsed time count (if "elapsed_time_sec == 15", for
+        #   example, the last condition makes it so the power up gets added just only at the first game loop
+        #   in which "elapsed_time_sec == 15").
+        if(elapsed_time_sec != 0 and elapsed_time_sec % 15 == 0 and elapsed_time_sec != most_recent_power_up_sec):
+            most_recent_power_up_sec = elapsed_time_sec
+            power_ups.append(PowerUp((random.randint(0,7) + 9, random.randint(0,7) + 5), most_recent_power_up_sec))
+            # [FOR DEBUGGING PURPOSES]
+            print(f"New power up added at second {elapsed_time_sec}, at position ({power_ups[-1].grid_position[0]},{power_ups[-1].grid_position[1]})")
+
         if(time_left == 0):
             game_termination = True
+            power_ups = []  # When there's no time left, all of the "PowerUp" objects
+                            # get removed from the list (this way, they won't be
+                            # blitted on the board in the following game loops)
 
-    '''
-    # [FOR DEBUGGING PURPOSES]
-    from math import floor
-    print(floor(time_left/60))
-    '''
 
     timer_surface = cmndef.update_timer_surface(time_left)
+
 
     # Wait for 60 ticks
     clock.tick(60)

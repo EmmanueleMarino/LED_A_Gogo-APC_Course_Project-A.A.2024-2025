@@ -78,12 +78,11 @@ def update_timer_surface(time_in_sec):
     # A new bigger surface gets created and shadows get blitted on it
     shadows_surface =  pygame.Surface((176, 100), pygame.SRCALPHA)
 
-    for i in range(2):
-        shadows_surface.blit(TIMER_DIGITS_SHADOWS[int(minutes_string[0])],(0,0))
-        shadows_surface.blit(TIMER_DIGITS_SHADOWS[int(minutes_string[1])],(24,0))
-        shadows_surface.blit(TIMER_COLON_SHADOW,(48,0))
-        shadows_surface.blit(TIMER_DIGITS_SHADOWS[int(seconds_string[0])],(72,0))
-        shadows_surface.blit(TIMER_DIGITS_SHADOWS[int(seconds_string[1])],(96,0))
+    shadows_surface.blit(TIMER_DIGITS_SHADOWS[int(minutes_string[0])],(0,0))
+    shadows_surface.blit(TIMER_DIGITS_SHADOWS[int(minutes_string[1])],(24,0))
+    shadows_surface.blit(TIMER_COLON_SHADOW,(48,0))
+    shadows_surface.blit(TIMER_DIGITS_SHADOWS[int(seconds_string[0])],(72,0))
+    shadows_surface.blit(TIMER_DIGITS_SHADOWS[int(seconds_string[1])],(96,0))
 
     # The complete shadow gets computed by blitting the digits_surface on the
     # "shadows_surface" (so that the shadows are displayed underneath the digits)
