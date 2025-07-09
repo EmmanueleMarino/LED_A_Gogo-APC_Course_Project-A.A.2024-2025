@@ -34,7 +34,12 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_hal_tim_ex.h \
  ../Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_hal_uart.h \
  ../Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_hal_uart_ex.h \
- ../Core/Inc/gyroscope_module.h
+ ../Core/Inc/gyroscope_module.h ../BSP/stm32f3_discovery_gyroscope.h \
+ ../BSP/stm32f3_discovery.h \
+ ../BSP/Components/../Components/l3gd20/l3gd20.h \
+ ../BSP/Components/../Components/l3gd20/../Common/gyro.h \
+ ../BSP/Components/../Components/i3g4250d/i3g4250d.h \
+ ../BSP/Components/../Components/i3g4250d/../Common/gyro.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_hal.h:
 ../Core/Inc/stm32f3xx_hal_conf.h:
@@ -72,3 +77,9 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_hal_uart.h:
 ../Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_hal_uart_ex.h:
 ../Core/Inc/gyroscope_module.h:
+../BSP/stm32f3_discovery_gyroscope.h:
+../BSP/stm32f3_discovery.h:
+../BSP/Components/../Components/l3gd20/l3gd20.h:
+../BSP/Components/../Components/l3gd20/../Common/gyro.h:
+../BSP/Components/../Components/i3g4250d/i3g4250d.h:
+../BSP/Components/../Components/i3g4250d/../Common/gyro.h:

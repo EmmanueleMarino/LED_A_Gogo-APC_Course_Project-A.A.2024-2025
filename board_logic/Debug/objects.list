@@ -1,3 +1,7 @@
+"./BSP/Components/i3g4250d/i3g4250d.o"
+"./BSP/Components/l3gd20/l3gd20.o"
+"./BSP/stm32f3_discovery.o"
+"./BSP/stm32f3_discovery_gyroscope.o"
 "./Core/Src/main.o"
 "./Core/Src/stm32f3xx_hal_msp.o"
 "./Core/Src/stm32f3xx_it.o"

@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "stm32f3_discovery_gyroscope.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -54,7 +55,8 @@ UART_HandleTypeDef huart5;
 PCD_HandleTypeDef hpcd_USB_FS;
 
 /* USER CODE BEGIN PV */
-angular_velocity gyroscope_measurements = {0,0,0};
+//angular_velocity gyroscope_measurements = {0,0,0};
+float gyroscope_measurements[3] = {0.0,0.0,0.0};
 uint8_t rx_byte;               // A byte which gets received on the USART5 RX Terminal
 char command_buffer[10];       // Buffer of commands which are given to the board
 uint8_t buffer_index = 0;      // Index of the buffer
@@ -94,7 +96,9 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  if (BSP_GYRO_Init() != GYRO_OK) {
+          Error_Handler();
+  }
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -518,18 +522,62 @@ void turn_off_led(void)
                             LD7_Pin|LD8_Pin|LD9_Pin|LD10_Pin, GPIO_PIN_RESET);
 }
 
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim->Instance == TIM2)
     {
+    	/*
         uint32_t random_number= rand() % 100;	//random number
+		*/
+
+    	BSP_GYRO_GetXYZ(gyroscope_measurements);
+
+    	// Signs for each axis
+    	char axis_sign[3] = {'b','b','b'};
+
+    	if (gyroscope_measurements[0] >= 0.0f) {
+    		axis_sign[0] = '+';
+    	} else {
+    		axis_sign[0] = '-';
+    	}
+
+    	if (gyroscope_measurements[1] >= 0.0f) {
+    		axis_sign[1] = '+';
+		} else {
+			axis_sign[1] = '-';
+		}
+
+    	if (gyroscope_measurements[1] >= 0.0f) {
+    		axis_sign[2] = '+';
+		} else {
+			axis_sign[2] = '-';
+		}
+
+    	int gyro_x[3] = {abs(((int)(gyroscope_measurements[0]))),
+    					 abs(((int)(gyroscope_measurements[0] * 10))   % 10),
+						 abs(((int)(gyroscope_measurements[0] * 100))   % 10)};
+
+    	int gyro_y[3] = {abs(((int)(gyroscope_measurements[1]))),
+    					 abs(((int)(gyroscope_measurements[1] * 10))   % 10),
+						 abs(((int)(gyroscope_measurements[1] * 100))   % 10)};
+
+    	int gyro_z[3] = {abs(((int)(gyroscope_measurements[2]))),
+    					 abs(((int)(gyroscope_measurements[2] * 10))   % 10),
+						 abs(((int)(gyroscope_measurements[2] * 100))   % 10)};
 
         char msg[30];
-        sprintf(msg, "Random number: %lu\r\n", random_number);
+
+
+        sprintf(msg, "Gyro measurements: (%c%d.%d%d, %c%d.%d%d, %c%d.%d%d)",
+                axis_sign[0], gyro_x[0], gyro_x[1], gyro_x[2],
+                axis_sign[1], gyro_y[0], gyro_y[1], gyro_y[2],
+                axis_sign[2], gyro_z[0], gyro_z[1], gyro_z[2]);
 
         HAL_UART_Transmit(&huart5, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
     }
 }
+
 
 /* USER CODE END 4 */
 
