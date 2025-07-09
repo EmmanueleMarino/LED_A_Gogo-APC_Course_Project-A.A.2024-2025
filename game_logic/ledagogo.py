@@ -275,6 +275,29 @@ while running:
                         pogo_board.status[players[current_player].player_id - 1][tile_coordinates[0]][tile_coordinates[1]] = 0
 
 
+    # Decrement the validity of each currently instantiated power
+    # up + Removing the powerUPs whose validity has expired
+    for power_up in power_ups:
+        for player in players:
+            if(power_up.check_collisions([player])):
+                if(power_up.validity > 0):
+                    print(f"Player {player.player_id} has acquired a power up") # [FOR DEBUGGING PURPOSES]
+                    power_up.validity = 0                                       # Once the power up has been
+                                                                                # acquired, its validity expires
+                    if(power_up in power_ups):
+                        power_ups.remove(power_up)
+
+                    # Whichever branch removed the power up, a reference to it gets added to the player's
+                    # "power_up" member, with its validity restored to the initial validity
+                    player.power_up = power_up
+                    player.power_up.validity = 15
+            else:
+                power_up.validity = power_up.initial_validity - (elapsed_time_sec - power_up.instantiation_time)
+                if(power_up.validity == 0):
+                    if(power_up in power_ups):                                  # The item is removed only if it hasn't
+                        power_ups.remove(power_up)                              # been already removed in the meanwhile
+
+
     #  /--------------------------------------------\
     # | BLITTING EVERY ACTIVE POWER UP ON THE SCREEN |
     #  \--------------------------------------------/
