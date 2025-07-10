@@ -291,6 +291,11 @@ while running:
                     # "power_up" member, with its validity restored to the initial validity
                     player.power_up = power_up
                     player.power_up.validity = 15
+                    
+                    # The surface for the "power up" slot has to be computed as soon as the
+                    # player acquires this power up, so that it can be blitted later in
+                    # this very game loop iteration
+                    player.scorer.compute_power_up_surface()
             else:
                 power_up.validity = power_up.initial_validity - (elapsed_time_sec - power_up.instantiation_time)
                 if(power_up.validity == 0):
@@ -327,7 +332,14 @@ while running:
     
     # [THE HUD GETS BLITTED ON TOP OF EVERYTHING]
     for i in range(4):
+        # Blitting the "power up" slot shadow, if the player indexed by "i" does have one
+        if players[i].power_up != None:
+            game_surface.blit(players[i].scorer.__class__.POWER_UP_SLOT_BASE_SHADOW, players[i].scorer.power_up_screen_position)
         game_surface.blit(players[i].scorer.surface, players[i].scorer.screen_position)
+
+        # Blitting the "power up" slot surface, if the player indexed by "i" does have one
+        if players[i].power_up != None:
+            game_surface.blit(players[i].scorer.power_up_surface, players[i].scorer.power_up_screen_position)
 
     game_surface.blit(time_left_shadow,(230,-10))
     game_surface.blit(time_left_surface,(230,-10))
@@ -354,6 +366,7 @@ while running:
     for i in range(4):
         players[i].compute_surface()
         players[i].scorer.compute_surface()
+        #players[i].scorer.compute_power_up_surface()
 
     # The surfaces for the
     # board's tiles get updated

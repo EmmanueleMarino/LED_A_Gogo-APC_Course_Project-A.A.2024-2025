@@ -28,14 +28,14 @@ class PowerUp(Entity):
     HITBOX_Y_OFFSET = 14
 
     # [Class constructor]
-    def __init__(self, grid_position, instantiation_time):
+    def __init__(self, grid_position, instantiation_time, initial_validity=7):
         self.grid_position = grid_position
         
         self.instantiation_time = instantiation_time    # The second at which the
                                                         # power up gets instantiated
 
         # Validity (in seconds) of the power up.
-        self.initial_validity = 7          
+        self.initial_validity = initial_validity          
         self.validity = self.initial_validity           # After this time elapses, the power up
                                                         # gets removed from the board.
 

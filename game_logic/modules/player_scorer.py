@@ -34,11 +34,19 @@ LED_OFFSETS = [(163,28), (172,32), (176,41), (172,50), (163,54), (154,50), (150,
 #  \-----------------------------------------------------------------------------------------------------/
 
 class PlayerScorer():
+    # The surface representing the slot
+    # for the "speed up" power up
+    POWER_UP_SLOT_BASE_SURFACE = pygame.image.load(os.path.join(assets_path, "hud/power_up/power_up_slot.png"))
+    POWER_UP_SLOT_BASE_SHADOW = pygame.image.load(os.path.join(assets_path, "hud/power_up/power_up_slot_shadow.png"))
+    POWER_UP_SLOT_BASE_SHADOW.set_alpha(75)
+
     # Static member of the class: each of these surfaces is a digit
     DIGITS_SURFACES = [pygame.image.load(os.path.join(assets_path, f"hud/digits/{i}.png")) for i in range(10)]
-    SCREEN_POSITIONS = [(-5,4),(425,4),(-5,245),(425,245)]    # Screen position of the scorer associated with each
+    SCREEN_POSITIONS = [(-5,4),(425,4),(-5,245),(425,245)]      # Screen position of the scorer associated with each
                                                                 # player. The HUD does not follow the grid-based logic
                                                                 # which is followed by the "Entity" subclasses
+
+    POWER_UP_SCREEN_POSITIONS = [(44,94),(479,94),(44,207),(479,207)]     # Screen position of the "power up"/"speed up" slots
 
     # The base graphics for the Scorer
     HUD_GRAPHICS = pygame.image.load(os.path.join(assets_path, "hud/hud_base.png"))
@@ -89,7 +97,9 @@ class PlayerScorer():
         '''
         self.player_ref = player_ref
         self.screen_position = PlayerScorer.SCREEN_POSITIONS[player_ref.player_id - 1]
+        self.power_up_screen_position = PlayerScorer.POWER_UP_SCREEN_POSITIONS[player_ref.player_id - 1]
         self.surface = None
+        self.power_up_surface = None    # The surface representing the "power up"/"speed up" slot
         self.compute_surface()
 
 
@@ -200,3 +210,44 @@ class PlayerScorer():
         # The final composite surface gets
         # returned to the caller
         self.surface = scorer_surface
+
+
+    # [Method to compute the surface of the "power up" slot in the HUD]
+    def compute_power_up_surface(self):
+        # [N.B.]: The following code is probably to take into account
+        # in a refactoring process. What happens is that some "Player"
+        # objects get initially built without a "power_up" attribute:
+        # that means that this surface has to be computed - when the
+        # function is called - only when the player effectively
+        # possesses a "power_up" attribute.
+        if hasattr(self.player_ref, "power_up"):
+            if(self.player_ref.power_up is not None):
+                #  /--------------------------------\
+                # | COMPUTING THE "POWER UP" SURFACE |
+                #  \--------------------------------/
+                # A transparent "base surface" gets created
+                pu_surface = pygame.Surface((149, 66), pygame.SRCALPHA)
+
+                #  /--------------------------------------------------------------\
+                # | [N.B.]: The shadow will not get blitted on the composite       |
+                # | surface (the objective is to firstly blit the shadow of the    |
+                # | power up surface, then the surface of the scorer, and - lastly |
+                # | - the surface of the "power up"/"speed up" slot)               |
+                #  \--------------------------------------------------------------/
+                # [The slot's base surface gets blitted on the composite surface]
+                pu_surface.blit(PlayerScorer.POWER_UP_SLOT_BASE_SURFACE)
+
+                print(self.player_ref.power_up.validity)
+
+                # String representing the power up's validity
+                power_up_validity_str = "0"*len(str(self.player_ref.power_up.validity))+str(self.player_ref.power_up.validity)
+                
+                # The blitting the digits of the power up's validity on the "pu_surface"
+                for i in range(4):
+                    j = 0 if i == 0 or i == 1 else 12
+                    pu_surface.blit(PlayerScorer.DIGITS_SURFACES[int(power_up_validity_str[i])],(50 + j + 11*i,32))
+                
+                # The power up graphics get blitted on top on the "pu_surface"
+                pu_surface.blit(self.player_ref.power_up.surface,(14,14))
+
+                self.power_up_surface = pu_surface
