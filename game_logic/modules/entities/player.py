@@ -89,9 +89,10 @@ class Player(Entity):
         self.controller_serial_port = controller_serial_port
 
         # The player does not initially hold a "power up"
-        self.power_up = None    # This attribute will hold a reference 
-                                # to the power up which has been acquired
-                                # by the player by colliding with it
+        self.has_power_up = False
+        self.power_up_initial_validity = 15
+        self.power_up_validity = self.power_up_initial_validity
+        self.power_up_acquisition_time = 0  # Initially 0, it gets updated when the power up gets acquired
 
         # The constructor of the upper class gets called
         super().__init__(grid_position, surface=self.animation_matrix[Direction.UP.value][0], hitbox_size=(22,22))

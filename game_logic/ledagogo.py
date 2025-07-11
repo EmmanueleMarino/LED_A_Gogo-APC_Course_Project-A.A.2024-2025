@@ -284,13 +284,16 @@ while running:
                     print(f"Player {player.player_id} has acquired a power up") # [FOR DEBUGGING PURPOSES]
                     power_up.validity = 0                                       # Once the power up has been
                                                                                 # acquired, its validity expires
+                    
+                    # [Thus, the power up gets removed from the
+                    #  list of power ups positioned on the board]
                     if(power_up in power_ups):
                         power_ups.remove(power_up)
 
-                    # Whichever branch removed the power up, a reference to it gets added to the player's
-                    # "power_up" member, with its validity restored to the initial validity
-                    player.power_up = power_up
-                    player.power_up.validity = 15
+                    # Whichever branch removed the power up, the "has_power_up"
+                    # attribute of the player gets set to "True".
+                    player.has_power_up = True
+                    player.power_up_instantiation_time = elapsed_time_sec
                     
                     # The surface for the "power up" slot has to be computed as soon as the
                     # player acquires this power up, so that it can be blitted later in
@@ -301,6 +304,14 @@ while running:
                 if(power_up.validity == 0):
                     if(power_up in power_ups):                                  # The item is removed only if it hasn't
                         power_ups.remove(power_up)                              # been already removed in the meanwhile
+
+
+    # [For each player, if they already possess a power up, its validity gets decreased every second]
+    for player in players:
+        if player.has_power_up:
+            player.power_up_validity = player.power_up_initial_validity - (elapsed_time_sec - player.power_up_instantiation_time)
+            if(player.power_up_validity == 0):
+                player.has_power_up = False
 
 
     #  /--------------------------------------------\
@@ -333,12 +344,14 @@ while running:
     # [THE HUD GETS BLITTED ON TOP OF EVERYTHING]
     for i in range(4):
         # Blitting the "power up" slot shadow, if the player indexed by "i" does have one
-        if players[i].power_up != None:
+        if players[i].has_power_up:
             game_surface.blit(players[i].scorer.__class__.POWER_UP_SLOT_BASE_SHADOW, players[i].scorer.power_up_screen_position)
+        
+        # Blitting the PlayerScorer element of the HUD
         game_surface.blit(players[i].scorer.surface, players[i].scorer.screen_position)
 
         # Blitting the "power up" slot surface, if the player indexed by "i" does have one
-        if players[i].power_up != None:
+        if players[i].has_power_up:
             game_surface.blit(players[i].scorer.power_up_surface, players[i].scorer.power_up_screen_position)
 
     game_surface.blit(time_left_shadow,(230,-10))
@@ -366,7 +379,7 @@ while running:
     for i in range(4):
         players[i].compute_surface()
         players[i].scorer.compute_surface()
-        #players[i].scorer.compute_power_up_surface()
+        players[i].scorer.compute_power_up_surface()
 
     # The surfaces for the
     # board's tiles get updated
