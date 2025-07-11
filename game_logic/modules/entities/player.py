@@ -93,6 +93,12 @@ class Player(Entity):
         self.power_up_initial_validity = 15
         self.power_up_validity = self.power_up_initial_validity
         self.power_up_acquisition_time = 0  # Initially 0, it gets updated when the power up gets acquired
+        
+        # State of the player with regards to the "power up"
+        self.is_powered_up = False
+        self.initial_power_up_duration = 5
+        self.power_up_duration = self.initial_power_up_duration
+        self.power_up_activation_time = 0   # Initially 0, it gets updated when the power activates a power up
 
         # The constructor of the upper class gets called
         super().__init__(grid_position, surface=self.animation_matrix[Direction.UP.value][0], hitbox_size=(22,22))

@@ -208,6 +208,14 @@ while running:
             elif event.key == pygame.K_TAB:
                 current_player = (current_player + 1) % 4
 
+            elif event.key == pygame.K_LSHIFT:
+                if players[current_player].has_power_up:
+                    players[current_player].has_power_up = False    # The power up has been consumed
+                    players[current_player].is_powered_up = True    # The player is now "powered up"
+                    players[current_player].power_up_duration = players[current_player].initial_power_up_duration
+                    players[current_player].power_up_activation_time = elapsed_time_sec
+                    print(f"Player {current_player + 1} has used a power up")
+
     # [LAST POSITION UPDATE]
     last_position_update = (0,0)
 
@@ -216,17 +224,34 @@ while running:
     cont_pressed_keys = pygame.key.get_pressed()
     if(not game_termination):
         if cont_pressed_keys[pygame.K_UP]:
-            last_position_update = ((0,-1))
-            players[current_player].update_position((0,-1))
+            if not players[current_player].is_powered_up:
+                last_position_update = ((0,-1))
+                players[current_player].update_position((0,-1))
+            else:
+                last_position_update = ((0,-2))
+                players[current_player].update_position((0,-2))
         elif cont_pressed_keys[pygame.K_RIGHT]:
-            last_position_update = ((1,0))
-            players[current_player].update_position((1,0))
+            if not players[current_player].is_powered_up:
+                last_position_update = ((1,0))
+                players[current_player].update_position((1,0))
+            else:
+                last_position_update = ((2,0))
+                players[current_player].update_position((2,0))
         elif cont_pressed_keys[pygame.K_DOWN]:
-            last_position_update = ((0,1))
-            players[current_player].update_position((0,1))
+            if not players[current_player].is_powered_up:
+                last_position_update = ((0,1))
+                players[current_player].update_position((0,1))
+            else:
+                last_position_update = ((0,2))
+                players[current_player].update_position((0,2))
         elif cont_pressed_keys[pygame.K_LEFT]:
-            last_position_update = ((-1,0))
-            players[current_player].update_position((-1,0))
+            if not players[current_player].is_powered_up:
+                last_position_update = ((-1,0))
+                players[current_player].update_position((-1,0))
+            else:
+                last_position_update = ((-2,0))
+                players[current_player].update_position((-2,0))
+
 
     # If the movement has caused the current player to collide,
     # the position update gets reverted before the actual blitting.
@@ -312,7 +337,13 @@ while running:
             player.power_up_validity = player.power_up_initial_validity - (elapsed_time_sec - player.power_up_instantiation_time)
             if(player.power_up_validity == 0):
                 player.has_power_up = False
-
+        
+        #If the player is currently powered up, the power up "duration" also gets decreased
+        if player.is_powered_up:
+            player.power_up_duration = player.initial_power_up_duration - (elapsed_time_sec - player.power_up_activation_time)
+            if(player.power_up_duration == 0):
+                player.is_powered_up = False
+            
 
     #  /--------------------------------------------\
     # | BLITTING EVERY ACTIVE POWER UP ON THE SCREEN |
