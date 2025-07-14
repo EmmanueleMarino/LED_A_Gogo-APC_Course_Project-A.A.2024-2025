@@ -2,7 +2,7 @@ import pygame
 import os
 
 from modules.scripts import common_definitions as cmndef
-from modules.scripts import screen_resize as scrsz
+#from modules.scripts import screen_resize as scrsz
 from modules.entities.player import Player
 from modules.entities.power_up import PowerUp
 from modules.pogo_board import PogoBoard
@@ -118,6 +118,12 @@ power_ups = []
 most_recent_power_up_sec = 0
 
 
+# /-----------------------------------------------------------\
+# [FOR DEBUGGING PURPOSES]                                     |
+last_queue_print = 0        # Last instant in which the "gyro" |
+                            # queue for Player 1 was printed.  |
+# \-----------------------------------------------------------/
+
 #  /---------\
 # | Game loop |
 #  \---------/
@@ -214,7 +220,7 @@ while running:
                     players[current_player].is_powered_up = True    # The player is now "powered up"
                     players[current_player].power_up_duration = players[current_player].initial_power_up_duration
                     players[current_player].power_up_activation_time = elapsed_time_sec
-                    print(f"Player {current_player + 1} has used a power up")
+                    #print(f"Player {current_player + 1} has used a power up")
 
     # [LAST POSITION UPDATE]
     last_position_update = (0,0)
@@ -223,35 +229,42 @@ while running:
     # continuosly pressed at the moment   
     cont_pressed_keys = pygame.key.get_pressed()
     if(not game_termination):
-        if cont_pressed_keys[pygame.K_UP]:
+        if current_player != 0:
+            if cont_pressed_keys[pygame.K_UP]:
+                if not players[current_player].is_powered_up:
+                    last_position_update = ((0,-1))
+                    players[current_player].update_position((0,-1))
+                else:
+                    last_position_update = ((0,-2))
+                    players[current_player].update_position((0,-2))
+            elif cont_pressed_keys[pygame.K_RIGHT]:
+                if not players[current_player].is_powered_up:
+                    last_position_update = ((1,0))
+                    players[current_player].update_position((1,0))
+                else:
+                    last_position_update = ((2,0))
+                    players[current_player].update_position((2,0))
+            elif cont_pressed_keys[pygame.K_DOWN]:
+                if not players[current_player].is_powered_up:
+                    last_position_update = ((0,1))
+                    players[current_player].update_position((0,1))
+                else:
+                    last_position_update = ((0,2))
+                    players[current_player].update_position((0,2))
+            elif cont_pressed_keys[pygame.K_LEFT]:
+                if not players[current_player].is_powered_up:
+                    last_position_update = ((-1,0))
+                    players[current_player].update_position((-1,0))
+                else:
+                    last_position_update = ((-2,0))
+                    players[current_player].update_position((-2,0))
+        else:
             if not players[current_player].is_powered_up:
-                last_position_update = ((0,-1))
-                players[current_player].update_position((0,-1))
+                last_position_update = sercom.gyro_msg_processing(players[current_player].gyro_msgs.get())
+                last_position_update = (last_position_update[0]*15, - last_position_update[1]*15)
+                players[current_player].update_position(last_position_update)
             else:
-                last_position_update = ((0,-2))
-                players[current_player].update_position((0,-2))
-        elif cont_pressed_keys[pygame.K_RIGHT]:
-            if not players[current_player].is_powered_up:
-                last_position_update = ((1,0))
-                players[current_player].update_position((1,0))
-            else:
-                last_position_update = ((2,0))
-                players[current_player].update_position((2,0))
-        elif cont_pressed_keys[pygame.K_DOWN]:
-            if not players[current_player].is_powered_up:
-                last_position_update = ((0,1))
-                players[current_player].update_position((0,1))
-            else:
-                last_position_update = ((0,2))
-                players[current_player].update_position((0,2))
-        elif cont_pressed_keys[pygame.K_LEFT]:
-            if not players[current_player].is_powered_up:
-                last_position_update = ((-1,0))
-                players[current_player].update_position((-1,0))
-            else:
-                last_position_update = ((-2,0))
-                players[current_player].update_position((-2,0))
-
+                pass
 
     # If the movement has caused the current player to collide,
     # the position update gets reverted before the actual blitting.
@@ -306,7 +319,7 @@ while running:
         for player in players:
             if(power_up.check_collisions([player])):
                 if(power_up.validity > 0):
-                    print(f"Player {player.player_id} has acquired a power up") # [FOR DEBUGGING PURPOSES]
+                    #print(f"Player {player.player_id} has acquired a power up") # [FOR DEBUGGING PURPOSES]
                     power_up.validity = 0                                       # Once the power up has been
                                                                                 # acquired, its validity expires
                     
@@ -443,7 +456,7 @@ while running:
             most_recent_power_up_sec = elapsed_time_sec
             power_ups.append(PowerUp((random.randint(0,7) + 9, random.randint(0,7) + 5), most_recent_power_up_sec))
             # [FOR DEBUGGING PURPOSES]
-            print(f"New power up added at second {elapsed_time_sec}, at position ({power_ups[-1].grid_position[0]},{power_ups[-1].grid_position[1]})")
+            #print(f"New power up added at second {elapsed_time_sec}, at position ({power_ups[-1].grid_position[0]},{power_ups[-1].grid_position[1]})")
 
         if(time_left == 0):
             game_termination = True
@@ -454,12 +467,25 @@ while running:
 
     timer_surface = cmndef.update_timer_surface(time_left)
 
+    '''
+    #  /--------------------------------------\
+    # | TESTING THE ENQUEUEING OF THE MESSAGES |
+    #  \--------------------------------------/
+    if last_queue_print != elapsed_time_sec:
+        last_queue_print = elapsed_time_sec
+        print(f"{list(players[0].gyro_msgs.queue)}\n")
+    '''
 
     # Wait for 60 ticks
     clock.tick(60)
 
 # [The connection(s) with the BT modules get closed]
 sercom.turn_led_on(0,players[0].controller_serial_port)
+players[0].receiver_stop_event.set()                                 # To stop the reading thread operations
+players[0].receiver_thread.join()                                    # Wait for the thread's termination, before
+                                                                     # closing the connection and terminating the
+                                                                     # main thread.
+                                                                     
 sercom.close_connection(players[0].controller_serial_port)  # For now, only P1 is associated
                                                             # with an STM32DISCOVERYBOARD
 

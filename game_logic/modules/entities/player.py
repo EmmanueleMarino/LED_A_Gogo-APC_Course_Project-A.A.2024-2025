@@ -12,6 +12,8 @@ import os
 from modules.enumerations.direction import Direction                                # Enumeration for the four directions
 from modules.player_scorer import PlayerScorer
 from modules.scripts.serial_communication import serial_communication as sercom     # For serial communication
+import queue
+import threading
 
 
 class Player(Entity):
@@ -100,6 +102,18 @@ class Player(Entity):
         self.power_up_duration = self.initial_power_up_duration
         self.power_up_activation_time = 0   # Initially 0, it gets updated when the power activates a power up
 
+        # Queues of messages coming from the board
+        self.gyro_msgs = queue.Queue(maxsize=64)
+        self.speed_msg = queue.Queue(maxsize=1)
+
+        # [N.B.]: I think having a different "receiver_thread" for each player might be too much, so it will be probabily all
+        # handled in a single thread... for now, given that each player has got a "receiver_stop_event" which has to used to
+        # terminate the reading loop before closing the virtual serial port
+        self.receiver_stop_event = threading.Event()
+
+        # Reading thread
+        self.receiver_thread = sercom.start_serial_receiver_thread(self.controller_serial_port, self.gyro_msgs, self.speed_msg, self.receiver_stop_event) if self.controller_serial_port != None else None
+
         # The constructor of the upper class gets called
         super().__init__(grid_position, surface=self.animation_matrix[Direction.UP.value][0], hitbox_size=(22,22))
 
@@ -179,8 +193,8 @@ class Player(Entity):
                                 self.screen_position[1] + movement_tuple[1])
 
         # The hitbox has to move together with the player's sprite
-        self.hitbox.x += movement_tuple[0]
-        self.hitbox.y += movement_tuple[1]
+        self.hitbox.x = self.screen_position[0] + Player.HITBOX_X_OFFSET
+        self.hitbox.y = self.screen_position[1] + Player.HITBOX_Y_OFFSET
 
 
     # [Method to update the score and the active LEDs number]

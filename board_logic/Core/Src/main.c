@@ -57,9 +57,37 @@ PCD_HandleTypeDef hpcd_USB_FS;
 /* USER CODE BEGIN PV */
 //angular_velocity gyroscope_measurements = {0,0,0};
 float gyroscope_measurements[3] = {0.0,0.0,0.0};
+
+float max_module = 500000.0f;   // Maximum value (in module) that a gyroscope measurement
+							  	 // can assume. We use this information to normalize the
+							     // readings so they fall in the [-1,1] interval
+
+// [TO DO]: I previously set "max_module" to "1000.0f", but this still gave me readings
+// which were not in the [-1,1] interval, so I tried multiplying it by a "500" factor...
+
+// The reason this is the highest possible module is that the readings
+// which are returned by "BSP_GYRO_GetXYZ" are expressed in milli-dps.
+
+// [N.B.]: the "BSP_GYRO_Init" function sets the full scale to 500, which means that the
+// readings returned by "BSP_GYRO_GetXYZ" are the raw 16 bits readings multiplied by a
+// "17.50" factor -> see Table 4 at Page 9 of the L3GD20 datasheet.
+
 uint8_t rx_byte;               // A byte which gets received on the USART5 RX Terminal
 char command_buffer[10];       // Buffer of commands which are given to the board
 uint8_t buffer_index = 0;      // Index of the buffer
+
+volatile uint8_t tx_busy = 0;  // This gets declared as "volatile" to
+							   // avoid erroneous optimizations by the
+							   // compiler (the need to specify "volatile"
+							   // is caused by the fact that the variable
+							   // gets modified by an external source).
+
+// Used to request the transmission of a "HspeedPgo" message,
+// overriding any pending gyroscope message if necessary.
+volatile uint8_t override_pending = 0;
+char override_msg[] = "HspeedPgo\n";
+
+char tx_msg[100];			   // Message to transmit on the UART
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -249,7 +277,7 @@ static void MX_SPI1_Init(void)
   hspi1.Instance = SPI1;
   hspi1.Init.Mode = SPI_MODE_MASTER;
   hspi1.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi1.Init.DataSize = SPI_DATASIZE_4BIT;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
@@ -289,11 +317,11 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 7199;
+  htim2.Init.Prescaler = 8999;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 49999;
+  htim2.Init.Period = 79;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
   {
     Error_Handler();
@@ -406,10 +434,8 @@ static void MX_GPIO_Init(void)
                           |LD7_Pin|LD9_Pin|LD10_Pin|LD8_Pin
                           |LD6_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : DRDY_Pin MEMS_INT3_Pin MEMS_INT4_Pin MEMS_INT1_Pin
-                           MEMS_INT2_Pin */
-  GPIO_InitStruct.Pin = DRDY_Pin|MEMS_INT3_Pin|MEMS_INT4_Pin|MEMS_INT1_Pin
-                          |MEMS_INT2_Pin;
+  /*Configure GPIO pins : DRDY_Pin MEMS_INT3_Pin MEMS_INT4_Pin MEMS_INT2_Pin */
+  GPIO_InitStruct.Pin = DRDY_Pin|MEMS_INT3_Pin|MEMS_INT4_Pin|MEMS_INT2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_EVT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
@@ -425,11 +451,15 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : B1_Pin */
-  GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  /*Configure GPIO pin : PA0 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
@@ -437,6 +467,14 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+// Function which turns all of the LEDs off
+void turn_off_led(void)
+{
+  HAL_GPIO_WritePin(GPIOE, LD3_Pin|LD4_Pin|LD5_Pin|LD6_Pin|
+                            LD7_Pin|LD8_Pin|LD9_Pin|LD10_Pin, GPIO_PIN_RESET);
+}
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == UART5)
@@ -516,68 +554,78 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 }
 
 
-void turn_off_led(void)
+// Function which gets executed at the end of
+// a transmission on the UART (which sets the
+// "busy state") of the UART at zero again.
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
-  HAL_GPIO_WritePin(GPIOE, LD3_Pin|LD4_Pin|LD5_Pin|LD6_Pin|
-                            LD7_Pin|LD8_Pin|LD9_Pin|LD10_Pin, GPIO_PIN_RESET);
+    if (huart->Instance == UART5) {
+    	// If there was an override
+    	// message, it will have to be sent.
+        if (override_pending) {
+            override_pending = 0;
+            tx_busy = 1;
+            HAL_UART_Transmit_IT(&huart5, (uint8_t*)override_msg, strlen(override_msg));
+        } else {
+            tx_busy = 0;
+        }
+    }
 }
 
 
+// This function handles the interrupt generated when
+// a timer's period elapses (when it happens, the function
+// simply transmits the gyroscope readings to the paired device)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim->Instance == TIM2)
     {
-    	/*
-        uint32_t random_number= rand() % 100;	//random number
-		*/
+    	// If there's a transmission going on, or there's an override message pending (these
+    	// are messages coming from the EXTI0 callback), the current transmission gets skipped
+    	// (even if we lose gyro "packets/message", the game does not require a huge precision)
+    	if (tx_busy || override_pending)
+    	            return;
 
     	BSP_GYRO_GetXYZ(gyroscope_measurements);
+		snprintf(tx_msg, sizeof(tx_msg),
+				 "HgyroP%.6f,%.6f\n",
+				 gyroscope_measurements[0] / max_module,	// Each reading gets normalized
+				 gyroscope_measurements[1] / max_module);   // in the [-1,1] interval
 
-    	// Signs for each axis
-    	char axis_sign[3] = {'b','b','b'};
+				// We don't need readings on the "Z" axis, for out movement is bidimensional
 
-    	if (gyroscope_measurements[0] >= 0.0f) {
-    		axis_sign[0] = '+';
-    	} else {
-    		axis_sign[0] = '-';
-    	}
-
-    	if (gyroscope_measurements[1] >= 0.0f) {
-    		axis_sign[1] = '+';
-		} else {
-			axis_sign[1] = '-';
-		}
-
-    	if (gyroscope_measurements[1] >= 0.0f) {
-    		axis_sign[2] = '+';
-		} else {
-			axis_sign[2] = '-';
-		}
-
-    	int gyro_x[3] = {abs(((int)(gyroscope_measurements[0]))),
-    					 abs(((int)(gyroscope_measurements[0] * 10))   % 10),
-						 abs(((int)(gyroscope_measurements[0] * 100))   % 10)};
-
-    	int gyro_y[3] = {abs(((int)(gyroscope_measurements[1]))),
-    					 abs(((int)(gyroscope_measurements[1] * 10))   % 10),
-						 abs(((int)(gyroscope_measurements[1] * 100))   % 10)};
-
-    	int gyro_z[3] = {abs(((int)(gyroscope_measurements[2]))),
-    					 abs(((int)(gyroscope_measurements[2] * 10))   % 10),
-						 abs(((int)(gyroscope_measurements[2] * 100))   % 10)};
-
-        char msg[30];
-
-
-        sprintf(msg, "Gyro measurements: (%c%d.%d%d, %c%d.%d%d, %c%d.%d%d)",
-                axis_sign[0], gyro_x[0], gyro_x[1], gyro_x[2],
-                axis_sign[1], gyro_y[0], gyro_y[1], gyro_y[2],
-                axis_sign[2], gyro_z[0], gyro_z[1], gyro_z[2]);
-
-        HAL_UART_Transmit(&huart5, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+		// The UART will have to transmit
+		// the message, so it gets "busy"
+		tx_busy = 1;
+		HAL_UART_Transmit_IT(&huart5, (uint8_t*)tx_msg, strlen(tx_msg));
     }
 }
 
+
+// Interrupt generated by the pressing of the "USER"
+// button, it will get used to send the message which
+// guarantees the consumption of the power up by a
+// player
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    if (GPIO_Pin == GPIO_PIN_0)  // User Button
+    {
+        // If the UART is not transmitting, the
+    	// transmission gets started.
+        if (!tx_busy)
+        {
+            tx_busy = 1;
+            HAL_UART_Transmit_IT(&huart5, (uint8_t*)override_msg, strlen(override_msg));
+        }
+        else
+        {
+            // If the UART is transmitting, the message is pending
+        	// (rembember: messages from the User Button CANNOT be lost,
+        	// contrary to the gyroscope readings).
+            override_pending = 1;
+        }
+    }
+}
 
 /* USER CODE END 4 */
 
