@@ -260,7 +260,7 @@ while running:
                     players[current_player].update_position((-2,0))
         else:
             if not players[current_player].is_powered_up:
-                last_position_update = sercom.gyro_msg_processing(players[current_player].gyro_msgs.get())
+                last_position_update = players[current_player].gyro_buffer
                 last_position_update = (last_position_update[0]*15, - last_position_update[1]*15)
                 players[current_player].update_position(last_position_update)
             else:
@@ -482,7 +482,8 @@ while running:
 # [The connection(s) with the BT modules get closed]
 sercom.turn_led_on(0,players[0].controller_serial_port)
 players[0].receiver_stop_event.set()                                 # To stop the reading thread operations
-players[0].receiver_thread.join()                                    # Wait for the thread's termination, before
+players[0].receiver_thread.join()                                    
+players[0].dequeueing_thread.join()                                  # Wait for the thread's termination, before
                                                                      # closing the connection and terminating the
                                                                      # main thread.
                                                                      

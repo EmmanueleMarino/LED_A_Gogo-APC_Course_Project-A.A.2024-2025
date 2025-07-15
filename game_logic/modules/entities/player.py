@@ -14,7 +14,7 @@ from modules.player_scorer import PlayerScorer
 from modules.scripts.serial_communication import serial_communication as sercom     # For serial communication
 import queue
 import threading
-
+import time
 
 class Player(Entity):
     #  /----------------\
@@ -106,6 +106,11 @@ class Player(Entity):
         self.gyro_msgs = queue.Queue(maxsize=64)
         self.speed_msg = queue.Queue(maxsize=1)
 
+        # Buffer which contains the latest dequeued
+        # value for the gyroscope readings.
+        self.gyro_buffer = (0,0)            # Initially, its value is (0,0)
+        self.buffer_lock = threading.Lock() # Lock to access the buffer
+
         # [N.B.]: I think having a different "receiver_thread" for each player might be too much, so it will be probabily all
         # handled in a single thread... for now, given that each player has got a "receiver_stop_event" which has to used to
         # terminate the reading loop before closing the virtual serial port
@@ -113,6 +118,9 @@ class Player(Entity):
 
         # Reading thread
         self.receiver_thread = sercom.start_serial_receiver_thread(self.controller_serial_port, self.gyro_msgs, self.speed_msg, self.receiver_stop_event) if self.controller_serial_port != None else None
+
+        # Dequeueing thread
+        self.dequeueing_thread = self.start_dequeueing_thread()
 
         # The constructor of the upper class gets called
         super().__init__(grid_position, surface=self.animation_matrix[Direction.UP.value][0], hitbox_size=(22,22))
@@ -223,3 +231,45 @@ class Player(Entity):
 
             # [FOR DEBUGGING PURPOSES]
             #print(f"Player {self.player_id} has exceeded threshold n°{self.active_leds_num}")
+
+
+    # [The thread which operates the dequeueing of
+    #  messages from the queue of gyroscope readings]
+    def gyro_dequeue_thread(self):
+        period = 1.0 / 60.0  # The thread will have to sleep for around 16ms
+                             # at each iteration (so it is "syncrhonous" with
+                             # the game loop).
+
+        while not self.receiver_stop_event.is_set():
+            start_time = time.time()
+
+            try:
+                msg = sercom.gyro_msg_processing(self.gyro_msgs.get_nowait())
+                # Lock to ensure the buffer has
+                # been properly updated before
+                # the main thread can read it
+                with self.buffer_lock:
+                    self.gyro_buffer = msg
+            except queue.Empty:
+                pass  # If the queue is empty, the buffer won't be updated
+
+            # Calculate the time which has elapsed between
+            # the starting time of the dequeueing and the
+            # current time
+            elapsed = time.time() - start_time
+
+            # Sleep until the 16ms period is completed
+            # (for synchronization with the main thread)
+            time.sleep(max(0, period - elapsed))
+
+
+    # [Function to start a background thread to dequeue the "gyroscope readings" messages]
+    def start_dequeueing_thread(self):
+        thread = threading.Thread(
+            target=self.gyro_dequeue_thread,
+            args=(),
+            daemon=True         # ["daemon=True"]: this means the thread 
+                                # will close when the main program ends
+        )
+        thread.start()
+        return thread
