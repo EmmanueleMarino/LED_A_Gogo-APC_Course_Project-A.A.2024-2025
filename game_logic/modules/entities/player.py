@@ -104,7 +104,7 @@ class Player(Entity):
 
         # Queues of messages coming from the board
         self.gyro_msgs = queue.Queue(maxsize=64)
-        self.speed_msg = queue.Queue(maxsize=1)
+        self.speed_msg = [None]
 
         # Buffer which contains the latest dequeued
         # value for the gyroscope readings.
@@ -272,4 +272,4 @@ class Player(Entity):
                                 # will close when the main program ends
         )
         thread.start()
-        return thread
+        return thread        

@@ -215,12 +215,26 @@ while running:
                 current_player = (current_player + 1) % 4
 
             elif event.key == pygame.K_LSHIFT:
-                if players[current_player].has_power_up:
-                    players[current_player].has_power_up = False    # The power up has been consumed
-                    players[current_player].is_powered_up = True    # The player is now "powered up"
-                    players[current_player].power_up_duration = players[current_player].initial_power_up_duration
-                    players[current_player].power_up_activation_time = elapsed_time_sec
-                    #print(f"Player {current_player + 1} has used a power up")
+                if current_player != 0:
+                    if players[current_player].has_power_up:
+                        players[current_player].has_power_up = False    # The power up has been consumed
+                        players[current_player].is_powered_up = True    # The player is now "powered up"
+                        players[current_player].power_up_duration = players[current_player].initial_power_up_duration
+                        players[current_player].power_up_activation_time = elapsed_time_sec
+                        #print(f"Player {current_player + 1} has used a power up")
+
+    if current_player == 0:
+        if players[current_player].has_power_up:
+            # If the player has pressed the USER BUTTON
+            # (a "HspeedPgo" message has arrived), the
+            # power up gets used
+            if(players[0].speed_msg[0] != None):
+                players[0].speed_msg[0] = None
+                players[current_player].has_power_up = False    # The power up has been consumed
+                players[current_player].is_powered_up = True    # The player is now "powered up"
+                players[current_player].power_up_duration = players[current_player].initial_power_up_duration
+                players[current_player].power_up_activation_time = elapsed_time_sec
+
 
     # [LAST POSITION UPDATE]
     last_position_update = (0,0)
@@ -259,12 +273,13 @@ while running:
                     last_position_update = ((-2,0))
                     players[current_player].update_position((-2,0))
         else:
+            last_position_update = players[current_player].gyro_buffer
             if not players[current_player].is_powered_up:
-                last_position_update = players[current_player].gyro_buffer
-                last_position_update = (last_position_update[0]*15, - last_position_update[1]*15)
-                players[current_player].update_position(last_position_update)
+                last_position_update = (last_position_update[0]*7.5, - last_position_update[1]*7.5)
             else:
-                pass
+                last_position_update = (last_position_update[0]*15, - last_position_update[1]*15)
+            players[current_player].change_direction(cmndef.determine_direction(last_position_update))
+            players[current_player].update_position(last_position_update)
 
     # If the movement has caused the current player to collide,
     # the position update gets reverted before the actual blitting.

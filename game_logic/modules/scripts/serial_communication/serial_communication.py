@@ -146,20 +146,11 @@ def msg_rx_and_enqueueing(serial_port_obj, gyro_msgs, speed_msg, stop_event):
                         # Add the new message consisting of gyroscope readings
                         gyro_msgs.put(line)
                 
-                # [Checking and enqueueing "power up"/"speed up" command messages]
+                # [Checking the presence of a "power up"/"speed up"]
                 elif SPEED_REGEX.match(line):
                     with lock:
-                        # For the speed queue (size 1), remove any existing message first
-
-                        # [N.B.]: it might be useful to not use a queue at all, given that
-                        # there will always be a single command memorized in this data structure
-                        while not speed_msg.empty():
-                            try:
-                                speed_msg.get_nowait()
-                            except queue.Empty:
-                                break
-                        # Add the new "power up"/"speed up" message
-                        speed_msg.put(line)
+                        # Overwrite the existing "speed up" message
+                            speed_msg[0] = line
             # Messages that don't match the expected format are ignored
         else:
             # No data available, sleep briefly to avoid busy-waiting

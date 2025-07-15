@@ -2,6 +2,7 @@
 import os
 import pygame
 from math import floor
+from modules.enumerations.direction import Direction
 
 # [COMMON PATHS]
 game_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # Absolute path of the "game_logic" folder
@@ -90,3 +91,19 @@ def update_timer_surface(time_in_sec):
     shadows_surface.blit(digits_surface,(38,30))
 
     return shadows_surface
+
+
+# [Function to determine the direction of the 
+#  player depending on the last update of the
+#  position given by the gyroscope readings]
+def determine_direction(gyro_reading):
+    if(abs(gyro_reading[0]) >= abs(gyro_reading[1])):
+        if gyro_reading[0] <= 0.0:
+            return Direction.LEFT
+        else:
+            return Direction.RIGHT
+    else:
+        if gyro_reading[1] <= 0.0:
+            return Direction.UP
+        else:
+            return Direction.DOWN
