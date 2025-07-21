@@ -10,6 +10,7 @@ from modules.scripts import common_definitions as cmndef
 import pygame
 import os
 from modules.enumerations.direction import Direction                                # Enumeration for the four directions
+from modules.enumerations.game_phase import GamePhase
 from modules.player_scorer import PlayerScorer
 from modules.scripts.serial_communication import serial_communication as sercom     # For serial communication
 import queue
@@ -43,6 +44,9 @@ class Player(Entity):
     # [SCORE-THRESHOLDS]
     SCORE_THRESHOLDS = [50, 150, 300, 500,       # When the player's score exceeds a threshold,
                        750, 1100, 1500, 1950]   # the corresponding LED gets turned on.
+
+    # [Starting positions on the grid for each player]
+    STARTING_POSITIONS = [(10,6), (15,6), (10,11), (15,11)]
 
     #  /-------\
     # | METHODS |

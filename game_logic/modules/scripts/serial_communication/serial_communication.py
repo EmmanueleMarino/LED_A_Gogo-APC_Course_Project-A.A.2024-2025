@@ -20,9 +20,24 @@ import re           # For regex expressions used to validate message formats
 import time         # To put the "reading/receiving thread" to sleep if there's
                     # no available data to receive in its current iteration
 
+
 # Regex expressions to validate the message formats
 GYRO_REGEX = re.compile(r"^HgyroP-?\d+\.\d+,-?\d+\.\d+$")   # Gyroscope readings
 SPEED_REGEX = re.compile(r"^HspeedPgo$")                    # Power up/Speed up commands
+
+
+# COM ports towards which the connections will be opened.
+# For now, they're hardcoded (the BT module have already been paired with the computer),
+# if we have time, we'll try to determine them in a dynamic fashion.
+COM_PORTS = ['COM7','COM12','','']
+
+# [N.B.]: it's likely the computer can handle just a single BT connection at once, so
+# we'll have to try using UART to USB adapters for the rest of the boards... for now,
+
+# We'll have to check if the "USER USB" on the STM32F3DISCOVERY board is capable of
+# sending and receiving data in a full-duplex (or even "half-duplex") mode, or if
+# it is only simplex. Anyway, even if it is solely simplex, we'll use it just to
+# start testing the movement for the rest of the boards.
 
 # [Function to enstablish the connection
 #  with the Bluetooth module]
@@ -47,6 +62,8 @@ def connect_bt_module(COM_port, baud_rate, timeout):
     '''
     try:
         serial_port_obj = serial.Serial(COM_port, baudrate=baud_rate, timeout=timeout)
+        # [FOR DEBUGGING PURPOSES]
+        print(f"Connection detected on the '{COM_port}' port\n")
         return serial_port_obj
     except serial.SerialException as e:
         return f"[SERIAL PORT OPENING ERROR]:\n{e}\n\n"
@@ -143,14 +160,25 @@ def msg_rx_and_enqueueing(serial_port_obj, gyro_msgs, speed_msg, stop_event):
                                 gyro_msgs.get_nowait()  # Non-blocking removal
                             except queue.Empty:
                                 pass  # Queue unexpectedly empty, ignore
+
+                        # ------------------------\
+                        # [FOR DEBUGGING PURPOSES] |
+                        #print(line)               |
+                        # -------------------------/
+
                         # Add the new message consisting of gyroscope readings
                         gyro_msgs.put(line)
-                
                 # [Checking the presence of a "power up"/"speed up"]
                 elif SPEED_REGEX.match(line):
                     with lock:
                         # Overwrite the existing "speed up" message
                             speed_msg[0] = line
+                        
+                            # ------------------------\
+                            # [FOR DEBUGGING PURPOSES] |
+                            #print(line)               |
+                            # -------------------------/
+                            print(line)
             # Messages that don't match the expected format are ignored
         else:
             # No data available, sleep briefly to avoid busy-waiting
