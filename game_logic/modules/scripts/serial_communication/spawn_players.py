@@ -13,7 +13,7 @@ import serial
 import threading
 
 # [FOR DEBUGGING PURPOSES] => Highest possible number of players in a same game session
-MAX_PLAYERS_NUM = 2
+MAX_PLAYERS_NUM = 3
 
 # [Function which adds players to the list of
 #  players when it manages to connect to the

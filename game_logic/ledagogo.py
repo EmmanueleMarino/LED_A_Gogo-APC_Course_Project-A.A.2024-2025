@@ -35,7 +35,8 @@ playing_surface = pygame.Surface(cmndef.base_game_size)
 #  /-----------------------------\
 # | "WAITING FOR PLAYERS" SURFACE |
 #  \-----------------------------/
-wait_players_surface = pygame.image.load(os.path.join(cmndef.assets_path, "hud/waiting_for_players_placeholder.png")).convert_alpha()
+wait_players_surface = pygame.image.load(os.path.join(cmndef.assets_path, "hud/waiting_for_players.png")).convert_alpha()
+wait_players_shadow = pygame.image.load(os.path.join(cmndef.assets_path, "hud/waiting_for_players_shadow.png")).convert_alpha()
 
 #  /----------------------------------------------\
 # | SURFACES OF THE VARIOUS GAME SCENARIO ELEMENTS |
@@ -426,6 +427,7 @@ while running:
         # | IF THE GAME IS IN THE "PLAYER_SPAWNING" PHASE, WHAT GETS BLITTED ARE THE "WAITING FOR PLAYERS" |
         # | HUD ELEMENT ON THE TOP HALF OF THE SCREEN AND THE "PLAYER READY" UNDER THE PLAYERS' SPRITES    |
         #  \----------------------------------------------------------------------------------------------/
+        game_surface.blit(wait_players_shadow)
         game_surface.blit(wait_players_surface)
         
 

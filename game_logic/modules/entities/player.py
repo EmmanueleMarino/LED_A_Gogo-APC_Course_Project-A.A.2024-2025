@@ -284,3 +284,10 @@ class Player(Entity):
         )
         thread.start()
         return thread        
+    
+    # [Class destructor => If the program has terminated incorrectly,
+    #  the serial port stil gets closed, to avoid memory management
+    #  issues]
+    def __del__(self):
+        if self.controller_serial_port and self.controller_serial_port.is_open:
+            sercom.close_connection(self.controller_serial_port)

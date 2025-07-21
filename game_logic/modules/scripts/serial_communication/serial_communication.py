@@ -29,7 +29,7 @@ SPEED_REGEX = re.compile(r"^HspeedPgo$")                    # Power up/Speed up 
 # COM ports towards which the connections will be opened.
 # For now, they're hardcoded (the BT module have already been paired with the computer),
 # if we have time, we'll try to determine them in a dynamic fashion.
-COM_PORTS = ['COM7','COM12','','']
+COM_PORTS = ['COM7','COM12','COM14','']
 
 # [N.B.]: it's likely the computer can handle just a single BT connection at once, so
 # we'll have to try using UART to USB adapters for the rest of the boards... for now,
