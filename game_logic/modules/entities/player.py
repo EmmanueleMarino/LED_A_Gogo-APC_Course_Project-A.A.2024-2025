@@ -126,6 +126,13 @@ class Player(Entity):
         # Dequeueing thread
         self.dequeueing_thread = self.start_dequeueing_thread()
 
+        # Blocking colliders => List of collidable objects which block the player movement when it collides with them
+        self.blocking_colliders = None      # It will be dynamically determined at the termination of the "player spawning" phase
+
+        # Last position update => This 2-elements tuple gets used at each game loop to modify the
+        # position of the player and to "revert the player's position in the collisions' handling system
+        self.last_position_update = (0,0)   # It is initially zero
+
         # The constructor of the upper class gets called
         super().__init__(grid_position, surface=self.animation_matrix[Direction.UP.value][0], hitbox_size=(22,22))
 

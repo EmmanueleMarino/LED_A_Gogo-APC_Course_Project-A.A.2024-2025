@@ -10,7 +10,6 @@ from modules.scripts.find_smallest_rectangle import find_smallest_rectangle
 from modules.scripts.serial_communication import serial_communication as sercom
 from modules.scripts.serial_communication import spawn_players as spwpl
 import random
-#import copy
 import threading
 
 
@@ -128,6 +127,13 @@ power_ups = []
 # to the list
 most_recent_power_up_sec = 0
 
+# These are the objects with
+# which every player will collide
+global_colliders = []
+global_colliders += pogo_board.board_borders['side_tiles'][Direction.UP.value]
+global_colliders += pogo_board.board_borders['side_tiles'][Direction.RIGHT.value]
+global_colliders += pogo_board.board_borders['side_tiles'][Direction.DOWN.value]
+global_colliders += pogo_board.board_borders['side_tiles'][Direction.LEFT.value]
 
 #  /---------\
 # | GAME LOOP |
@@ -147,6 +153,9 @@ while running:
         # next game phase by terminating and joining 
         # the player spawning thread 
         if phase_change:
+            for player in players:
+                other_players = [p for p in players if p != player] if len(players) > 1 else []
+                player.blocking_colliders = global_colliders + other_players
             player_spawning_stop_event.set()
             player_spawning_thread.join()
             game_phase = GamePhase.GAME_SESSION
@@ -186,14 +195,6 @@ while running:
     # The playing surface gets blitted on the
     # global game surface.
     game_surface.blit(playing_surface,(0,0))
-
-    # These are the objects with
-    # which every player will collide
-    colliders = []
-    colliders += pogo_board.board_borders['side_tiles'][Direction.UP.value]
-    colliders += pogo_board.board_borders['side_tiles'][Direction.RIGHT.value]
-    colliders += pogo_board.board_borders['side_tiles'][Direction.DOWN.value]
-    colliders += pogo_board.board_borders['side_tiles'][Direction.LEFT.value]
 
     # Event detection in the game loop
     for event in pygame.event.get():
@@ -244,23 +245,18 @@ while running:
                     player.power_up_activation_time = elapsed_time_sec
 
 
-        # [LAST POSITION UPDATE]
-        last_position_update = (0,0)    # It gets declared here, otherwise the collision
-                                        # system wouldn't see this variable (if it were
-                                        # declared in the scope of the movement system)
-
         #  /---------------\
         # | MOVEMENT SYSTEM |
         #  \---------------/
         if(not game_termination):
             for player in players:
-                last_position_update = player.gyro_buffer
+                player.last_position_update = player.gyro_buffer
                 if not player.is_powered_up:
-                    last_position_update = (last_position_update[0]*7.5, - last_position_update[1]*7.5)
+                    player.last_position_update = (player.last_position_update[0]*7.5, - player.last_position_update[1]*7.5)
                 else:
-                    last_position_update = (last_position_update[0]*15, - last_position_update[1]*15)
-                player.change_direction(cmndef.determine_direction(last_position_update))
-                player.update_position(last_position_update)
+                    player.last_position_update = (player.last_position_update[0]*15, - player.last_position_update[1]*15)
+                player.change_direction(cmndef.determine_direction(player.last_position_update))
+                player.update_position(player.last_position_update)
 
 
         #  /----------------\
@@ -270,20 +266,13 @@ while running:
         # the position update gets reverted before the actual blitting.
         # By doing so, the player's hitbox won't get stuck into other
         # player's (or entity's) hitboxes.
-        for player in players:
-            # If there's more than one player, the list of each player's colliders comprise the original
-            # list of colliders and the list of players different from the one we're currently iterating on
-            if len(players) > 1:
-                all_colliders = colliders + [p for p in players if p != player]
-            else:
-                all_colliders = colliders
-            
+        for player in players:            
             # [CHECK COLLISIONS]
-            if(player.check_collisions(all_colliders)):
+            if(player.check_collisions(player.blocking_colliders)):
                 # If a player collides with at least one
                 # collider, its latest movement gets "reverted"
-                player.update_position((last_position_update[0] * -1,
-                                        last_position_update[1] * -1))
+                player.update_position((player.last_position_update[0] * -1,
+                                        player.last_position_update[1] * -1))
 
     #  /----------------------------------------------------------------\
     # | CHECK IF THE "CHANGE TILE ACQUISITION" EVENT HAS TO BE TRIGGERED |
