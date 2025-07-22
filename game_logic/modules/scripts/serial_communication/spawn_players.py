@@ -37,6 +37,7 @@ def detect_players(players_list, stop_event):
         # That means, this cycle will keep on executing even if all the boards
         # have been detected (until every player is in the "ready" state).
         if len(players_list) < MAX_PLAYERS_NUM and len(players_list) < len(sercom.COM_PORTS):
+            print(f"Trying to connect to the {sercom.COM_PORTS[len(players_list)]} port")
             serial_port_object = sercom.connect_bt_module(sercom.COM_PORTS[len(players_list)], 9600, 2)
             if isinstance(serial_port_object, serial.Serial):
                 players_list.append(Player(Player.STARTING_POSITIONS[len(players_list)], len(players_list) + 1, serial_port_object))
