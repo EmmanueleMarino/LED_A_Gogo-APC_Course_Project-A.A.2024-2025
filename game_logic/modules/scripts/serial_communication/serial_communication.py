@@ -14,6 +14,7 @@ independent from the specific OS could be a desirable result.
 
 # [IMPORT OF LIBRARIES]
 import serial       # Pyserial
+import serial.tools.list_ports
 import queue        # To build a queue
 import threading    # To spawn a new thread for message reception
 import re           # For regex expressions used to validate message formats
@@ -29,7 +30,7 @@ SPEED_REGEX = re.compile(r"^HspeedPgo$")                    # Power up/Speed up 
 # COM ports towards which the connections will be opened.
 # For now, they're hardcoded (the BT module have already been paired with the computer),
 # if we have time, we'll try to determine them in a dynamic fashion.
-COM_PORTS = ['COM7','COM12','COM14','']
+COM_PORTS = ['COM7']
 
 # [N.B.]: it's likely the computer can handle just a single BT connection at once, so
 # we'll have to try using UART to USB adapters for the rest of the boards... for now,
@@ -212,3 +213,12 @@ def gyro_msg_processing(msg):
 
     # The 2-elements couple of readings gets returned to the caller
     return (gyro_x,gyro_y)
+
+
+# [Function to detect newly opened COM ports]
+def detect_new_COM_port(known_ports):
+    # List of ports which were previously opened by the OS
+    previously_opened = ['COM6','COM8','COM9']
+    current_ports = set(p.device for p in serial.tools.list_ports.comports())
+    new_ports = list(current_ports - set(known_ports) - set(previously_opened))
+    return new_ports
