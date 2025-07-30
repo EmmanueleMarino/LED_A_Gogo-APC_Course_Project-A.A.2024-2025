@@ -1,16 +1,5 @@
-<div style="margin-bottom: 15px;
-            display: flex;
-            align-items: flex-start;
-            filter: drop-shadow(7.5px 7.5px 5px rgba(0, 0, 0, 0.20));">
-    <img src="game_logic/assets/markdown/game_logo.png" alt="Logo for the <LED-A-Gogo> project" width="225"/>
-    <div style="display: flex;
-                flex-direction: column;
-                align-items: center;
-                margin-left: 25px;">
-        <img src="game_logic/assets/markdown/gameplay_footage.png" alt="Title for the gameplay footage" width="375"
-             style="margin-bottom: 15px;"/>
-        <img src="game_logic/assets/markdown/gameplay.gif" alt="Gameplay footage from the game" width="435"/>
-    </div>
+<div align="center">
+            <img src="game_logic/assets/markdown/game_logo.png" alt="Logo for the <LED-A-Gogo> project" width="250">
 </div>
 
 # 📟 LED-A-Gogo - APC Course Project - A.A. 2024/2025
@@ -23,6 +12,14 @@
 Emmanuele Marino  
 Livia Pagliaro  
 Martina Capasso  
+
+<div align="center">
+            <img src="game_logic/assets/markdown/gameplay_footage.png" alt="Title for the gameplay footage" width="375">
+</div>
+
+<div align="center">
+            <img src="game_logic/assets/markdown/gameplay.gif" alt="Gameplay footage from the game" width="435">
+</div>
 
 ---
 
@@ -48,31 +45,23 @@ Said readings will be then used to control the position on the screen of the pla
 ---
 
 ## 🟢🔵🔴🟠 Turn the LEDs on! 🟢🔵🔴🟠
-<div style="display: flex; align-items: center;">
-<img src="game_logic/assets/markdown/md_scorer.png" alt="LED-A-Gogo Player Scorer"
-     style="margin-right: 50px;
-            filter: drop-shadow(7.5px 7.5px 5px rgba(0, 0, 0, 0.20));">
-    <p style="white-space: pre-line;">
-    To increment its score, a player must <b><i>close a rectangle</i></b>
-    of <b>3x3</b> or greater size on the <b><i>8x8 "pogo board"</i></b>.<br>
-    Each time a player's score exceeds a certain <b>threshold</b>,
-    a LED is <b><i>physically turned on</i></b> on the STM32F3DISCOVERY board.<br>
-    The game ends when a player has managed to turn on
-    every LED or when the game session's time expires.<br>
-    The player who's turned on every LED, or whose score
-    was the highest when the time expired, wins the game.
-    </p>
-</div>
+<img src="game_logic/assets/markdown/md_scorer.png" alt="LED-A-Gogo Player Scorer">
+
+<ul>
+            <li>To increment its score, a player must <b><i>close a rectangle</i></b> of <b>3x3</b> or greater size on the <b><i>8x8 "pogo board"</i></b>.</li>
+            <li>Each time a player's score exceeds a certain <b>threshold</b>, a LED is <b><i>physically turned on</i></b> on the STM32F3DISCOVERY board.</li>
+            <li>The game ends when a player has managed to turn on every LED or when the game session's time expires.</li>
+            <li>The player who's turned on every LED, or whose score was the highest when the time expired, wins the game.</li>
+</ul>
 
 ---
 
 ## ⚡ Speed up!
-<img src="game_logic/assets/markdown/power_up_md.png" alt="Power Up Slot"
-     style="filter: drop-shadow(7.5px 7.5px 5px rgba(0, 0, 0, 0.20));">
+<img src="game_logic/assets/markdown/power_up_md.png" alt="Power Up Slot">
 
-From time to time, a "power up" icon can spawn on the "pogo board".  
-Once a player collects a power up, said player possesses a limited amount of time to **consume** the power up by pressing the **USER button** on the board.  
-The effect of the power up's consumption is an increase of the player's speed for a brief period of time.
+* From time to time, a "power up" icon can spawn on the "pogo board".  
+* Once a player collects a power up, said player possesses a limited amount of time to **consume** the power up by pressing the **USER button** on the board.  
+* The effect of the power up's consumption is an increase of the player's speed for a brief period of time.
 
 ---
 
